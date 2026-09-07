@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from titlei.cli import main
+from titlei.cli import _build_parser, main
 
 
 def test_run_writes_outputs(tmp_path, capsys):
@@ -181,3 +181,61 @@ def test_wizard_answers_file_is_honoured(tmp_path, capsys):
         "--save", str(saved), "--runs-dir", str(tmp_path / "runs"),
     ]) == 0
     assert _yaml.safe_load(saved.read_text())["extra_budget"] == 800e6
+
+
+# --- flag placement --------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["-v", "describe"],
+        ["describe", "-v"],
+        ["-v", "describe", "-v"],
+    ],
+    ids=["before", "after", "both"],
+)
+def test_verbose_is_accepted_on_either_side_of_the_subcommand(argv, capsys):
+    """CI runs `titlei report --out outputs -v`; both placements must work."""
+    assert main(argv) == 0
+
+
+def test_verbose_after_the_subcommand_actually_enables_logging(tmp_path, caplog):
+    import logging
+
+    with caplog.at_level(logging.INFO, logger="titlei.data"):
+        main(["run", "--no-sweep", "--no-register", "--out", str(tmp_path), "-v"])
+    assert any("schools retained" in r.message for r in caplog.records)
+
+
+def test_verbose_before_the_subcommand_is_not_reset_by_the_subparser(
+    tmp_path, caplog
+):
+    """The argparse trap: a subparser default must not clobber the outer flag."""
+    import logging
+
+    with caplog.at_level(logging.INFO, logger="titlei.data"):
+        main(["-v", "run", "--no-sweep", "--no-register", "--out", str(tmp_path)])
+    assert any("schools retained" in r.message for r in caplog.records)
+
+
+def test_omitting_verbose_leaves_logging_quiet(tmp_path, caplog):
+    import logging
+
+    with caplog.at_level(logging.INFO, logger="titlei.data"):
+        main(["runs", "--runs-dir", str(tmp_path / "none")])
+    assert not caplog.records
+
+
+@pytest.mark.parametrize(
+    "command",
+    ["run", "report", "sweep", "describe", "wizard", "runs", "show", "compare"],
+)
+def test_every_subcommand_accepts_a_trailing_verbose(command):
+    """Guards against a new subcommand forgetting the shared verbosity parent."""
+    parser = _build_parser()
+    argv = [command, "-v"]
+    if command == "show":
+        argv = [command, "some-ref", "-v"]
+    args = parser.parse_args(argv)
+    assert args.verbose is True

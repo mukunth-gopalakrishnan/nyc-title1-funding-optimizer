@@ -43,6 +43,18 @@ def _build_parser() -> argparse.ArgumentParser:
         "-v", "--verbose", action="store_true", help="log pipeline progress"
     )
 
+    # `-v` reads naturally on either side of the subcommand, so accept both.
+    # SUPPRESS keeps the subparser from overwriting a top-level `-v` with its
+    # own default when the flag was given before the subcommand.
+    verbosity = argparse.ArgumentParser(add_help=False)
+    verbosity.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        default=argparse.SUPPRESS,
+        help="log pipeline progress",
+    )
+
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--data", type=Path, default=None, help="path to the school CSV")
     common.add_argument(
@@ -65,7 +77,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     run = sub.add_parser(
         "run",
-        parents=[common, registry_args],
+        parents=[common, registry_args, verbosity],
         help="run the model, write CSV outputs, and register the run",
     )
     run.add_argument("--out", type=Path, default=Path("outputs"))
@@ -82,12 +94,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     report = sub.add_parser(
-        "report", parents=[common], help="run the model and build the HTML report"
+        "report", parents=[common, verbosity], help="run the model and build the HTML report"
     )
     report.add_argument("--out", type=Path, default=Path("outputs"))
 
     sweep = sub.add_parser(
-        "sweep", parents=[common], help="compare strategies across budgets"
+        "sweep", parents=[common, verbosity], help="compare strategies across budgets"
     )
     sweep.add_argument("--out", type=Path, default=None, help="write the sweep to CSV")
     sweep.add_argument(
@@ -98,11 +110,13 @@ def _build_parser() -> argparse.ArgumentParser:
         help="budgets to evaluate, in dollars",
     )
 
-    sub.add_parser("describe", parents=[common], help="summarise the input data")
+    sub.add_parser(
+        "describe", parents=[common, verbosity], help="summarise the input data"
+    )
 
     wizard = sub.add_parser(
         "wizard",
-        parents=[registry_args],
+        parents=[registry_args, verbosity],
         help="answer a questionnaire to build and run a scenario",
     )
     wizard.add_argument(
@@ -126,19 +140,20 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     runs = sub.add_parser(
-        "runs", parents=[registry_args], help="list registered runs"
+        "runs", parents=[registry_args, verbosity], help="list registered runs"
     )
     runs.add_argument("--set-control", metavar="REF", help="mark a run as the control")
     runs.add_argument("--delete", metavar="REF", help="remove a run from the registry")
 
     show = sub.add_parser(
-        "show", parents=[registry_args], help="show one run's parameters and results"
+        "show", parents=[registry_args, verbosity],
+        help="show one run's parameters and results"
     )
     show.add_argument("ref", help="run id, id prefix, config hash, or label")
 
     compare = sub.add_parser(
         "compare",
-        parents=[registry_args],
+        parents=[registry_args, verbosity],
         help="overlay several runs and rank them",
     )
     compare.add_argument(
