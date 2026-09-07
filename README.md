@@ -26,7 +26,9 @@ It does that by making funding *less* equal on purpose.
 | `src/titlei/` | The model: data prep, need scoring, the LP, outcome projection, metrics, charts |
 | `dashboard/app.py` | Interactive Streamlit dashboard — move the budget and weights, watch the allocation change |
 | `outputs/charts/`, `outputs/tables/` | The generated charts and result tables, tracked so they are browsable here |
-| `tests/` | 66 tests, including a golden regression against the original analysis |
+| `src/titlei/runs.py` | The run registry — every simulation stores the parameters that produced it |
+| `src/titlei/wizard.py` | The scenario questionnaire behind `titlei wizard` |
+| `tests/` | 118 tests, including a golden regression against the original analysis |
 | `docs/methodology.md` | The model written out, and what it does *not* support |
 | `data/raw/` | 349 NYC Title I high schools with funding, staffing and Regents outcomes |
 
@@ -53,6 +55,55 @@ no server needed — plus eight PNGs and seven CSVs. For the interactive version
 streamlit run dashboard/app.py
 ```
 
+### Set up a scenario by answering questions
+
+If you would rather not read the config file, don't:
+
+```bash
+titlei wizard
+```
+
+It asks one question per parameter, each with what it does and what moving it
+will change, validates the answer, prints the scenario back for confirmation,
+then runs and registers it. `--save my-scenario.yaml` writes it out so the run
+is reproducible; `--defaults` accepts everything without prompting.
+
+### Runs are never anonymous
+
+Every run is saved with **the full parameter set that produced it**, a content
+hash of those parameters, a timestamp, and a label — so a folder of twenty runs
+is still readable months later.
+
+```bash
+titlei run --budget 250e6 --label "Half budget"
+titlei run --financial-weight 1.0 --label "Financial need only"
+titlei runs                     # list them, with the parameters side by side
+titlei show "Half budget"       # everything about one run
+```
+
+One run is the **control** — by default the published $500M scenario — and every
+comparison reports deltas against it. `make scenarios` registers a standard set
+of five and compares them in one go.
+
+### Compare scenarios
+
+```bash
+titlei compare
+```
+
+Overlays every saved run, ranks them, and writes five comparison charts:
+projected-score curves laid over each other, gain by need tier, a targeting
+ranking, the equity/targeting trade-off, and budget-sensitivity curves.
+
+<p align="center">
+  <img src="outputs/comparison/overlay_projected_scores.png" width="720"
+       alt="Projected Regents scores across five scenarios">
+</p>
+
+Every school in every scenario, sorted worst to best. The dashed line is the
+status quo. Notice the blue curve — financial-need-only — sitting *below* the
+others at the left edge: that is it failing the schools furthest behind.
+
 ### Other commands
 
 ```bash
@@ -62,8 +113,8 @@ titlei run --financial-weight 0.5            # a different definition of need
 titlei sweep --budgets 1e8 5e8 1e9           # how results scale with the budget
 ```
 
-Every parameter lives in [`config/model.yaml`](config/model.yaml) and can be
-overridden on the command line.
+Every parameter lives in [`config/model.yaml`](config/model.yaml), can be
+overridden on the command line, and is echoed into every saved run.
 
 ## How the model works
 
@@ -131,6 +182,33 @@ because it can still place dollars. On high-need schools the proposed model
 stays ahead at every budget (+5.00 vs +4.02). If the budget were really that
 large, the caps are the thing to revisit, not the weights.
 
+## Two traps in comparing scenarios
+
+Building the comparison tooling surfaced two ways this model can mislead you.
+Both are handled in code and printed as warnings by `titlei compare`, but they
+are worth understanding before reading any result.
+
+**Aggregate ROI is constant, by construction.** A school's gain is
+`funding / enrollment × k`, so the student-points it receives are
+`enrollment × funding / enrollment × k = funding × k`. Summed over schools that
+is `budget × k` — **total return depends only on how much you spend, never on
+where you spend it.** Any "return per dollar" metric is therefore identical for
+every allocation, and ranking on it ranks nothing. This is a property of the
+linear impact assumption, not a result about schools. The metrics that
+discriminate are all about *targeting*: whose students the return reaches.
+
+**"Need-tier gap closed" moves its own goalposts.** Each scenario defines its
+need tiers from its own weights, so comparing that gap across scenarios with
+different weights compares differently-composed groups. The package therefore
+also computes `academic_gap_closed` between the **top and bottom quartile of
+baseline Regents scores** — groups no scenario can move — and ranks on that by
+default.
+
+On that fixed yardstick, the capstone's central claim holds cleanly: per $100M
+spent, financial-need-only closes the top-vs-bottom-quartile gap by **0.20
+points**, the proposed 30/70 model by **0.70** — about 3.4× better targeting on
+the same money.
+
 ## Limitations
 
 The impact model is the weak joint. `impact_factor = 0.001` — one Regents point
@@ -151,9 +229,10 @@ chart, and the single-year snapshot — are in
 ## Development
 
 ```bash
-make test     # pytest
-make lint     # ruff
-make report   # rebuild outputs/
+make test       # pytest
+make lint       # ruff
+make report     # rebuild outputs/
+make scenarios  # register five standard scenarios and compare them
 ```
 
 CI runs the suite on Python 3.9–3.12 and re-runs the pipeline end to end.

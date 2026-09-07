@@ -26,6 +26,12 @@ order and never cycled; text uses ink tokens, never a series colour; any chart
 with two or more series carries a legend *and* direct labels. If you need a
 third series, use `SERIES_3` — past three, facet instead.
 
+**Never rank scenarios on an invariant metric.** Aggregate return per dollar is
+constant across allocations under the linear impact model, and the need-tier gap
+is defined differently by every scenario. New comparison metrics belong in
+`compare.SCORECARD_METRICS` only if they discriminate between allocations *and*
+are computed against groups no scenario can move. See `docs/methodology.md` §4a.
+
 **Claims in the README carry their numbers.** If you change the model, re-run
 `make report` and update any figure quoted in `README.md` or
 `docs/methodology.md`.
@@ -41,7 +47,10 @@ src/titlei/
   simulate.py    outcome projection, scenarios, budget sweep
   metrics.py     summaries, Gini, gaps, headline numbers
   theme.py       chart colours and matplotlib defaults
-  viz.py         chart builders (return Figures, never save)
+  viz.py         single-run chart builders (return Figures, never save)
+  compare.py     multi-run overlays, scorecards and trade-off charts
+  runs.py        the run registry: provenance, control, lookup
+  wizard.py      the scenario questionnaire
   report.py      static HTML report
   pipeline.py    orchestration
   cli.py         the `titlei` command

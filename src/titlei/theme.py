@@ -18,7 +18,32 @@ GRID = "#e6e5e1"
 
 SERIES_1 = "#2a78d6"  # blue    - the proposed / "after" series
 SERIES_2 = "#eb6834"  # orange  - the baseline / "before" series
-SERIES_3 = "#1baf7a"  # aqua    - reserved for a third series
+SERIES_3 = "#1baf7a"  # aqua
+SERIES_4 = "#eda100"  # yellow
+SERIES_5 = "#e87ba4"  # magenta
+SERIES_6 = "#008300"  # green
+SERIES_7 = "#4a3aa7"  # violet
+SERIES_8 = "#e34948"  # red
+
+#: Categorical slots in validated order. Assign by index, never cycle. Line and
+#: bar charts may use all eight; point clouds, where every pair sits side by
+#: side, are limited to the first three.
+SERIES = [
+    SERIES_1, SERIES_2, SERIES_3, SERIES_4,
+    SERIES_5, SERIES_6, SERIES_7, SERIES_8,
+]
+MAX_SERIES = len(SERIES)
+MAX_POINT_SERIES = 3
+
+
+def series_color(index: int) -> str:
+    """Colour for the nth series, in fixed slot order."""
+    if index >= MAX_SERIES:
+        raise ValueError(
+            f"only {MAX_SERIES} validated categorical slots exist; fold the rest "
+            "into an 'Other' series or facet the chart instead of cycling hues"
+        )
+    return SERIES[index]
 
 BEFORE = SERIES_2
 AFTER = SERIES_1

@@ -17,10 +17,13 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:  # allow running without installing the package
     sys.path.insert(0, str(ROOT / "src"))
 
+from titlei import compare as compare_mod  # noqa: E402
 from titlei import metrics, viz  # noqa: E402
 from titlei.config import load_config  # noqa: E402
 from titlei.data import FUNDING_PER_PUPIL, SCHOOL, SCORE, load_schools  # noqa: E402
 from titlei.needs import NEED_GROUP  # noqa: E402
+from titlei.pipeline import run_pipeline  # noqa: E402
+from titlei.runs import RunRegistry  # noqa: E402
 from titlei.simulate import (  # noqa: E402
     CHANGE,
     EXTRA_PER_PUPIL,
@@ -148,8 +151,15 @@ c5.metric(
     delta_color="inverse",
 )
 
-overview, strategy, schools_tab, sensitivity, data_tab = st.tabs(
-    ["Before & after", "Strategy comparison", "Schools", "Budget sensitivity", "Data"]
+overview, strategy, schools_tab, sensitivity, runs_tab, data_tab = st.tabs(
+    [
+        "Before & after",
+        "Strategy comparison",
+        "Schools",
+        "Budget sensitivity",
+        "Saved runs",
+        "Data",
+    ]
 )
 
 with overview:
@@ -220,6 +230,78 @@ with sensitivity:
     st.pyplot(viz.budget_sweep(sweep))
     st.pyplot(viz.budget_sweep(sweep, "High-Need Mean Score Change"))
     st.dataframe(sweep, width="stretch", hide_index=True)
+
+with runs_tab:
+    registry = RunRegistry(ROOT / "runs")
+
+    st.subheader("Save this scenario")
+    st.caption(
+        "A saved run stores the full parameter set that produced it, so two "
+        "runs can never be confused later."
+    )
+    save_col, label_col = st.columns([1, 2])
+    label = label_col.text_input(
+        "Label", placeholder="e.g. equal caps, academic-heavy, $1B", key="run_label"
+    )
+    if save_col.button("Save run", width="stretch"):
+        with st.spinner("Running and saving..."):
+            saved = registry.save(
+                run_pipeline(config=config), label=label.strip() or None
+            )
+        st.success(f"Saved {saved.run_id} — {saved.label}")
+
+    st.divider()
+    st.subheader("Compare saved runs")
+
+    records = registry.list()
+    if not records:
+        st.info("No runs saved yet. Save one above, or use `titlei run` on the CLI.")
+    else:
+        by_label = {f"{r.label}  ·  {r.run_id}": r for r in records}
+        chosen = st.multiselect(
+            "Runs to compare",
+            options=list(by_label),
+            default=list(by_label)[: min(4, len(by_label))],
+            help=f"Up to {compare_mod.MAX_SERIES} runs — past that, colours stop "
+            "being reliably distinguishable.",
+        )
+        selected = [by_label[key] for key in chosen]
+
+        if not selected:
+            st.info("Pick at least one run.")
+        elif len(selected) > compare_mod.MAX_SERIES:
+            st.warning(
+                f"Select at most {compare_mod.MAX_SERIES} runs to compare at once."
+            )
+        else:
+            control = registry.control
+            st.info(compare_mod.INVARIANCE_NOTE, icon="ℹ️")
+            st.warning(compare_mod.TIER_DEFINITION_NOTE, icon="⚠️")
+
+            metric = st.selectbox(
+                "Rank scenarios by",
+                options=list(compare_mod.SCORECARD_METRICS),
+                format_func=lambda k: compare_mod.SCORECARD_METRICS[k][0],
+            )
+            st.dataframe(
+                compare_mod.scorecard(selected, metric), width="stretch",
+                hide_index=True,
+            )
+
+            st.pyplot(compare_mod.overlay_projected_scores(selected, control))
+            left, right = st.columns(2)
+            left.pyplot(compare_mod.roi_comparison(selected, metric))
+            right.pyplot(compare_mod.equity_vs_return(selected))
+            st.pyplot(compare_mod.tier_gain_comparison(selected))
+            st.pyplot(compare_mod.overlay_budget_sweep(selected))
+
+            st.subheader("Parameters behind each run")
+            st.dataframe(
+                compare_mod.comparison_table(selected, control),
+                width="stretch",
+                hide_index=True,
+            )
+
 
 with data_tab:
     st.subheader("Model inputs")

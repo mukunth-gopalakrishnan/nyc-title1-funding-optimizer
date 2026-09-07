@@ -19,6 +19,9 @@ data/processed/*
 # published result. The full HTML report is regenerated (and uploaded by CI).
 outputs/report.html
 
+# Saved simulation runs are local working state.
+runs/
+
 .DS_Store
 .idea/
 .vscode/

@@ -28,9 +28,27 @@ report:  ## build the static HTML report
 sweep:  ## budget sensitivity table
 	titlei sweep
 
+wizard:  ## build a scenario by answering a questionnaire
+	titlei wizard
+
+runs:  ## list saved runs
+	titlei runs
+
+compare:  ## overlay and rank every saved run
+	titlei compare
+
+scenarios:  ## register a standard set of scenarios, then compare them
+	titlei run --label "Published 500M (control)" --control
+	titlei run --budget 250e6 --label "Half budget"
+	titlei run --budget 1e9   --label "Double budget"
+	titlei run --financial-weight 1.0 --label "Financial need only"
+	titlei run --low-need-cap 5000 --label "Equal caps"
+	titlei compare
+
 dashboard:  ## launch the interactive dashboard
 	streamlit run dashboard/app.py
 
 clean:
-	rm -rf outputs/charts outputs/tables outputs/report.html .pytest_cache .ruff_cache
+	rm -rf outputs/charts outputs/tables outputs/comparison outputs/report.html \
+		.pytest_cache .ruff_cache
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +

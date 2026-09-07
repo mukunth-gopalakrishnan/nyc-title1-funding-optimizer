@@ -107,6 +107,56 @@ model's arithmetic, not a forecast.
 The allocation itself is independent of `impact_factor` entirely — it appears
 only after the LP has been solved.
 
+## 4a. Comparing scenarios: two invariances that bite
+
+Once you can run many scenarios, two properties of this model make naive
+comparison misleading. Both are enforced in code.
+
+### Total return is invariant to allocation
+
+Define a **student-point** as one Regents point delivered to one student, and
+total return as the sum over schools of `enrollment x score change`.
+
+Under the linear impact model:
+
+```
+enrollment_i x change_i = enrollment_i x (funding_i / enrollment_i) x k
+                        = funding_i x k
+```
+
+Summing over schools gives `budget_used x k`. **Total student-points depend
+only on how much is spent — never on where.** Every allocation, however well or
+badly targeted, returns exactly the same aggregate.
+
+So `student_points_per_million` is identically `1000 x impact_factor` for every
+run, and any ROI ranking built on it is vacuous. `titlei compare` excludes it
+from the scorecard, prints the reason, and keeps the metric visible only so the
+invariance is not mistaken for a bug. The assertion lives in
+`tests/test_compare.py::test_aggregate_return_is_invariant_to_allocation`.
+
+The consequence for the analysis: in this model, "which allocation is better"
+is **never** an efficiency question. It is only ever a distributional one. Any
+efficiency claim would require an impact model with diminishing returns or
+school-specific responsiveness — see §7.
+
+### The need-tier gap moves with the weights
+
+`score_gap` measures the mean Regents gap between the high-need and lower-need
+tiers. But the tiers are defined by each scenario's own need weights, so a run
+with `financial_weight = 1.0` partitions the schools differently from the 30/70
+default. Comparing that gap across such runs compares different groups, not
+different policies — and it can invert the true ranking.
+
+`academic_gap` instead uses the **top and bottom quartile of baseline Regents
+scores**. Those groups come from the schools' starting position, which no
+scenario can change, so the yardstick is fixed. `academic_gap_closed_per_100m`
+is what `titlei compare` ranks on by default.
+
+The difference is not academic. Ranked on the scenario-defined tier gap,
+financial-need-only appears to *beat* the proposed model. Ranked on fixed
+quartiles it closes the gap at 0.20 points per $100M against the proposed
+model's 0.70 — the ordering reverses once the goalposts stop moving.
+
 ## 5. What the data cannot tell you
 
 **No counterfactual.** Every school is observed under one funding level. There
@@ -135,6 +185,28 @@ receive 55% of the budget. That is the model working as designed, and it is a
 value judgement, not a technical result: it holds that closing outcome gaps
 justifies unequal dollar distribution. A reader who rejects that premise should
 reject the allocation, and the weights are exposed so they can compute their own.
+
+## 5a. Run provenance
+
+Every run written by `titlei run` or `titlei wizard` is stored under `runs/` as:
+
+```
+runs/20260907-152007-8d5d55d3/
+  manifest.json        every parameter, plus headline and ROI metrics
+  allocation.csv       per-school results, proposed strategy
+  baseline_allocation.csv
+  group_summary.csv
+  budget_sweep.csv
+```
+
+The run id is `date-time-hash`, where the hash fingerprints the **parameter
+set**. Two runs of identical parameters share a hash even if their labels
+differ, so repeats are visible; two runs with any parameter changed cannot
+collide. `titlei show <ref>` prints the full parameter set behind any result,
+which is the answer to "which run was this, and what was it run with".
+
+One run is marked the control in `runs/index.json`. It is the fixed point every
+comparison reports deltas against; `titlei runs --set-control <ref>` moves it.
 
 ## 6. Reproducing the original analysis
 

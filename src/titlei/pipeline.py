@@ -30,6 +30,7 @@ class PipelineResult:
     borough_summary: pd.DataFrame
     sweep: pd.DataFrame
     headline: dict[str, float]
+    roi: dict[str, float]
     combined_allocation: AllocationResult
     naive_allocation: AllocationResult
 
@@ -47,6 +48,9 @@ class PipelineResult:
             "budget_sweep": self.sweep,
             "headline_metrics": pd.DataFrame(
                 sorted(self.headline.items()), columns=["metric", "value"]
+            ),
+            "roi_metrics": pd.DataFrame(
+                sorted(self.roi.items()), columns=["metric", "value"]
             ),
         }
         paths: dict[str, Path] = {}
@@ -89,6 +93,7 @@ def run_pipeline(
         borough_summary=metrics.borough_summary(combined),
         sweep=sweep,
         headline=metrics.headline_metrics(combined, config.extra_budget),
+        roi=metrics.roi_metrics(combined, combined_allocation.budget_used),
         combined_allocation=combined_allocation,
         naive_allocation=naive_allocation,
     )

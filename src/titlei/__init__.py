@@ -7,7 +7,15 @@ against the financial-need-only baseline the DOE uses today.
 
 from titlei.config import ModelConfig, load_config
 from titlei.pipeline import PipelineResult, run_pipeline
+from titlei.runs import RunRecord, RunRegistry
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
-__all__ = ["ModelConfig", "load_config", "PipelineResult", "run_pipeline"]
+__all__ = [
+    "ModelConfig",
+    "PipelineResult",
+    "RunRecord",
+    "RunRegistry",
+    "load_config",
+    "run_pipeline",
+]
