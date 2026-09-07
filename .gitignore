@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.env
+
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+
+data/processed/*
+!data/processed/.gitkeep
+
+# Charts and tables are tracked: the README embeds them and they are the
+# published result. The full HTML report is regenerated (and uploaded by CI).
+outputs/report.html
+
+.DS_Store
+.idea/
+.vscode/

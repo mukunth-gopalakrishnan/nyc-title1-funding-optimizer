@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nyc-title1-funding-optimizer"
+version = "1.0.0"
+description = "Need-weighted optimization of discretionary funding across NYC Title I high schools"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["education", "optimization", "linear-programming", "equity", "nyc"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "pandas>=1.5",
+    "numpy>=1.23",
+    "scipy>=1.9",
+    "matplotlib>=3.6",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dashboard = ["streamlit>=1.28"]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.4",
+    "openpyxl>=3.1",
+]
+
+[project.scripts]
+titlei = "titlei.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["error::FutureWarning"]
+
+[tool.ruff]
+line-length = 92
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "W"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/titlei/viz.py" = ["E402"]
