@@ -17,6 +17,7 @@ from titlei.data import load_schools
 from titlei.pipeline import run_pipeline
 from titlei.report import build_report
 from titlei.runs import DEFAULT_RUNS_DIR, AmbiguousRunReference, RunNotFound, RunRegistry
+from titlei.selfcheck import FAIL, run_checks, summarise
 from titlei.simulate import sweep_budgets
 from titlei.wizard import WizardAborted, run_wizard, save_config
 
@@ -92,6 +93,11 @@ def _build_parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--control", action="store_true", help="make this run the comparison control"
     )
+    run.add_argument(
+        "--replace",
+        action="store_true",
+        help="delete any existing run with this label first, so the name stays unique",
+    )
 
     report = sub.add_parser(
         "report", parents=[common, verbosity], help="run the model and build the HTML report"
@@ -137,6 +143,26 @@ def _build_parser() -> argparse.ArgumentParser:
         "--defaults",
         action="store_true",
         help="accept every default without prompting",
+    )
+
+    verify = sub.add_parser(
+        "verify",
+        parents=[verbosity],
+        help="check that this installation works, and reproduces the published results",
+    )
+    verify.add_argument("--data", type=Path, default=None)
+    verify.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
+    verify.add_argument("--out", type=Path, default=Path("outputs"))
+
+    demo = sub.add_parser(
+        "demo",
+        parents=[registry_args, verbosity],
+        help="guided end-to-end walkthrough; no arguments or prior knowledge needed",
+    )
+    demo.add_argument("--out", type=Path, default=Path("outputs/demo"))
+    demo.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
+    demo.add_argument(
+        "--no-report", action="store_true", help="skip building the HTML report"
     )
 
     runs = sub.add_parser(
@@ -211,7 +237,15 @@ def _cmd_run(args: argparse.Namespace) -> int:
         print(f"wrote {name}: {path}")
 
     if not args.no_register:
-        record = RunRegistry(args.runs_dir).save(
+        registry = RunRegistry(args.runs_dir)
+        if args.replace:
+            if not args.label:
+                print("error: --replace needs --label to know what to replace")
+                return 1
+            removed = registry.delete_by_label(args.label)
+            if removed:
+                print(f"\nreplaced {len(removed)} earlier run(s) labelled {args.label!r}")
+        record = registry.save(
             result,
             label=args.label,
             notes=args.notes,
@@ -221,8 +255,12 @@ def _cmd_run(args: argparse.Namespace) -> int:
         print(f"registered run {record.run_id}")
         print(f"  label   {record.label}")
         print(f"  params  {record.config_hash} (fingerprint of this parameter set)")
-        print(f"  ROI     {record.roi['student_points_per_million']:,.0f} "
-              "student-points per $1M")
+        # Never the aggregate return: it is identically 1000 x impact_factor
+        # for every allocation, so printing it invites exactly the misreading
+        # docs/methodology.md 4a warns about.
+        print(f"  targeting  {record.roi['high_need_share_of_budget']:.1%} of budget "
+              f"to high-need, quartile gap closed "
+              f"{record.roi['academic_gap_closed']:.2f} pts")
     return 0
 
 
@@ -361,6 +399,14 @@ def _cmd_show(args: argparse.Namespace) -> int:
     return 0
 
 
+def _narrow_to_recent(records, control, limit: int):
+    """Keep the control plus the most recent runs, up to ``limit``."""
+    recent = [r for r in records if control is None or r.run_id != control.run_id]
+    recent.sort(key=lambda r: r.created_at, reverse=True)
+    keep = recent[: limit - 1] if control is not None else recent[:limit]
+    return ([control] + keep) if control is not None else keep
+
+
 def _cmd_compare(args: argparse.Namespace) -> int:
     registry = RunRegistry(args.runs_dir)
     records = (
@@ -375,6 +421,23 @@ def _cmd_compare(args: argparse.Namespace) -> int:
     )
     if control is not None and control.run_id not in {r.run_id for r in records}:
         records = [control, *records]
+
+    if len(records) > compare_mod.MAX_SERIES:
+        if args.refs:
+            # The user named them, so say which to drop rather than choosing.
+            print(
+                f"error: {len(records)} runs exceeds the "
+                f"{compare_mod.MAX_SERIES} distinguishable colours. Name at most "
+                f"{compare_mod.MAX_SERIES}, or compare them in batches."
+            )
+            return 1
+        # No selection given: keep the control and the most recent runs, so the
+        # bare `titlei compare` always works however full the registry is.
+        records = _narrow_to_recent(records, control, compare_mod.MAX_SERIES)
+        print(
+            f"note: showing the control and the {len(records) - 1} most recent "
+            f"runs; name runs explicitly to choose a different set.\n"
+        )
 
     table = compare_mod.comparison_table(records, control)
     columns = [c for c in [
@@ -403,8 +466,43 @@ def _cmd_compare(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_verify(args: argparse.Namespace) -> int:
+    print("Verifying the installation...\n")
+    results = run_checks(args.data, args.config, args.out)
+    for result in results:
+        print(result.line())
+
+    passed, failed, skipped = summarise(results)
+    print()
+    print(f"{passed} passed, {failed} failed, {skipped} skipped")
+
+    if failed:
+        print("\nWhat to do:")
+        for result in results:
+            if result.status == FAIL and result.remedy:
+                print(f"  - {result.name}: {result.remedy}")
+        return 1
+
+    print("\nThis installation works. Try:  titlei demo")
+    return 0
+
+
+def _cmd_demo(args: argparse.Namespace) -> int:
+    from titlei.demo import run_demo
+
+    run_demo(
+        out_dir=args.out,
+        runs_dir=args.runs_dir,
+        config_path=args.config,
+        build_html=not args.no_report,
+    )
+    return 0
+
+
 COMMANDS = {
     "run": _cmd_run,
+    "verify": _cmd_verify,
+    "demo": _cmd_demo,
     "report": _cmd_report,
     "sweep": _cmd_sweep,
     "describe": _cmd_describe,

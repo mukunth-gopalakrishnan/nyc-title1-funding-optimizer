@@ -6,7 +6,10 @@ from titlei.cli import _build_parser, main
 
 
 def test_run_writes_outputs(tmp_path, capsys):
-    assert main(["run", "--no-sweep", "--out", str(tmp_path)]) == 0
+    assert main([
+        "run", "--no-sweep", "--out", str(tmp_path),
+        "--runs-dir", str(tmp_path / "runs"),
+    ]) == 0
     out = capsys.readouterr().out
     assert "schools retained" in out
     assert (tmp_path / "tables" / "combined_allocation.csv").exists()
@@ -32,15 +35,19 @@ def test_describe_summarises_inputs(capsys):
 
 
 def test_budget_override_changes_the_allocation(tmp_path, capsys):
-    main(["run", "--no-sweep", "--budget", "100000000", "--out", str(tmp_path)])
+    main([
+        "run", "--no-sweep", "--budget", "100000000", "--out", str(tmp_path),
+        "--runs-dir", str(tmp_path / "runs"),
+    ])
     assert "$100,000,000" in capsys.readouterr().out
 
 
 def test_a_single_weight_override_renormalises(tmp_path):
     """Setting only one side of the need index must not raise."""
-    assert main(
-        ["run", "--no-sweep", "--financial-weight", "0.6", "--out", str(tmp_path)]
-    ) == 0
+    assert main([
+        "run", "--no-sweep", "--financial-weight", "0.6", "--out", str(tmp_path),
+        "--runs-dir", str(tmp_path / "runs"),
+    ]) == 0
 
 
 def test_version_flag_exits_cleanly():
@@ -239,3 +246,134 @@ def test_every_subcommand_accepts_a_trailing_verbose(command):
         argv = [command, "some-ref", "-v"]
     args = parser.parse_args(argv)
     assert args.verbose is True
+
+
+# --- onboarding: verify and demo -------------------------------------------
+
+
+def test_verify_passes_on_a_healthy_install(tmp_path, capsys):
+    assert main(["verify", "--out", str(tmp_path)]) == 0
+    out = capsys.readouterr().out
+    assert "Reproduces published results" in out
+    assert "0 failed" in out
+    assert "titlei demo" in out
+
+
+def test_verify_exits_nonzero_and_advises_on_failure(tmp_path, capsys):
+    assert main(["verify", "--data", str(tmp_path / "gone.csv"), "--out", str(tmp_path)]) == 1
+    out = capsys.readouterr().out
+    assert "[FAIL]" in out
+    assert "What to do:" in out
+
+
+def test_demo_runs_with_no_arguments_beyond_paths(tmp_path, capsys):
+    assert main([
+        "demo", "--no-report",
+        "--out", str(tmp_path / "out"), "--runs-dir", str(tmp_path / "runs"),
+    ]) == 0
+    out = capsys.readouterr().out
+    assert "Step 1" in out and "Step 5" in out
+    assert "What to do next" in out
+
+
+# --- compare must never traceback on a full registry ------------------------
+
+
+def _register(count, runs_dir, out_dir):
+    for i in range(count):
+        main([
+            "run", "--no-sweep", "--budget", str(1e8 + i * 1e7),
+            "--label", f"Scenario {i}", "--out", str(out_dir),
+            "--runs-dir", str(runs_dir),
+        ])
+
+
+def test_bare_compare_works_with_more_runs_than_colour_slots(tmp_path, capsys):
+    """`make scenarios` hit a raw traceback here when runs already existed."""
+    from titlei.compare import MAX_SERIES
+
+    runs = tmp_path / "runs"
+    _register(MAX_SERIES + 3, runs, tmp_path)
+    capsys.readouterr()
+
+    assert main([
+        "compare", "--no-charts", "--runs-dir", str(runs),
+        "--out", str(tmp_path / "cmp"),
+    ]) == 0
+    out = capsys.readouterr().out
+    assert "most recent" in out
+    assert "Traceback" not in out
+    assert "best:" in out
+
+
+def test_bare_compare_keeps_the_control_when_it_narrows(tmp_path, capsys):
+    from titlei.compare import MAX_SERIES
+    from titlei.runs import RunRegistry
+
+    runs = tmp_path / "runs"
+    _register(MAX_SERIES + 3, runs, tmp_path)
+    control = RunRegistry(runs).set_control("Scenario 0")  # the oldest
+    capsys.readouterr()
+
+    main(["compare", "--no-charts", "--runs-dir", str(runs), "--out", str(tmp_path)])
+    assert control.label in capsys.readouterr().out
+
+
+def test_naming_too_many_runs_is_a_clean_error_not_a_traceback(tmp_path, capsys):
+    from titlei.compare import MAX_SERIES
+
+    runs = tmp_path / "runs"
+    _register(MAX_SERIES + 1, runs, tmp_path)
+    capsys.readouterr()
+
+    refs = [f"Scenario {i}" for i in range(MAX_SERIES + 1)]
+    assert main(["compare", *refs, "--no-charts", "--runs-dir", str(runs)]) == 1
+    out = capsys.readouterr().out
+    assert "error:" in out
+    assert "in batches" in out
+    assert "Traceback" not in out
+
+
+def test_run_replace_keeps_one_run_per_label(tmp_path, capsys):
+    runs = tmp_path / "runs"
+    for budget in ("1e8", "2e8"):
+        main([
+            "run", "--no-sweep", "--budget", budget, "--label", "Nightly",
+            "--replace", "--out", str(tmp_path), "--runs-dir", str(runs),
+        ])
+    capsys.readouterr()
+
+    assert main(["show", "Nightly", "--runs-dir", str(runs)]) == 0
+    out = capsys.readouterr().out
+    assert "200000000" in out.replace(",", "")
+
+
+def test_run_replace_requires_a_label(tmp_path, capsys):
+    assert main([
+        "run", "--no-sweep", "--replace",
+        "--out", str(tmp_path), "--runs-dir", str(tmp_path / "runs"),
+    ]) == 1
+    assert "needs --label" in capsys.readouterr().out
+
+
+# --- the no-activation entry point ------------------------------------------
+
+
+def test_module_entry_point_exists():
+    """`python -m titlei` is the documented way to run without activating."""
+    import importlib.util
+
+    assert importlib.util.find_spec("titlei.__main__") is not None
+
+
+def test_module_entry_point_runs_the_cli(tmp_path):
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, "-m", "titlei", "verify", "--out", str(tmp_path)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "Reproduces published results" in result.stdout

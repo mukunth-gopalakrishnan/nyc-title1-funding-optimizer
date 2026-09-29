@@ -51,3 +51,37 @@ def tiny_schools() -> pd.DataFrame:
             "Total School Funding per Pupil": [20000.0, 22000.0, 24000.0, 26000.0],
         }
     )
+
+
+@pytest.fixture(autouse=True)
+def _no_writes_to_the_real_registry():
+    """Fail any test that saves a run into the repository's own `runs/`.
+
+    Tests must pass `--runs-dir tmp_path`. Without this guard a forgotten flag
+    silently appends to the developer's saved runs every time they run the
+    suite — which happened, and only showed up as a puzzling run count days
+    later.
+    """
+    live = ROOT / "runs"
+    existed_before = live.exists()
+    before = {p.name for p in live.iterdir()} if existed_before else set()
+
+    yield
+
+    after = {p.name for p in live.iterdir()} if live.exists() else set()
+    created = after - before
+    if created:
+        import shutil
+
+        for name in created:  # leave the developer's registry as we found it
+            target = live / name
+            shutil.rmtree(target, ignore_errors=True) if target.is_dir() else (
+                target.unlink(missing_ok=True)
+            )
+        if not existed_before and live.exists() and not any(live.iterdir()):
+            live.rmdir()
+        pytest.fail(
+            "this test wrote "
+            f"{len(created)} run(s) into the repository's runs/ directory; "
+            "pass --runs-dir tmp_path instead"
+        )

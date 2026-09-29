@@ -317,6 +317,31 @@ class RunRegistry:
         frame.insert(1, "control", frame["run_id"] == control)
         return frame
 
+    def delete_by_label(self, label: str) -> list[str]:
+        """Delete every run carrying ``label``. Returns the ids removed.
+
+        Repeat runs are legitimate — the shared ``config_hash`` is how you spot
+        them — but a caller that *owns* a label, like ``titlei demo`` or the
+        ``scenarios`` make target, must be able to replace its own previous
+        runs. Otherwise re-running it makes that label ambiguous and every
+        lookup by name fails.
+        """
+        import shutil
+
+        removed = []
+        for record in self.list():
+            if record.label == label and record.directory is not None:
+                shutil.rmtree(record.directory)
+                removed.append(record.run_id)
+
+        if removed:
+            index = self._read_index()
+            if index.get("control") in removed:
+                remaining = self.list()
+                index["control"] = remaining[-1].run_id if remaining else None
+                self._write_index(index)
+        return removed
+
     def delete(self, reference: str) -> str:
         """Remove one run from the registry. Returns the deleted run id."""
         import shutil

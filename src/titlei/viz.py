@@ -298,9 +298,36 @@ def strategy_comparison(comparison: pd.DataFrame) -> Figure:
     )
 
 
+def has_sweep_data(sweep: pd.DataFrame, column: str = "Mean Score Change") -> bool:
+    """Whether a sweep frame actually carries plottable results.
+
+    A pipeline run with ``with_sweep=False`` produces an empty frame with only
+    its key columns, so callers must be able to ask before charting it.
+    """
+    return not sweep.empty and column in sweep.columns
+
+
 def budget_sweep(sweep: pd.DataFrame, column: str = "Mean Score Change") -> Figure:
     """How each strategy's projected gain scales with the budget."""
     fig, ax = plt.subplots(figsize=(10, 6))
+
+    if not has_sweep_data(sweep, column):
+        _headline(ax, "Budget sensitivity not available")
+        ax.text(
+            0.5,
+            0.5,
+            "This run was made without a budget sweep.\n"
+            "Re-run without --no-sweep to populate it.",
+            transform=ax.transAxes,
+            ha="center",
+            va="center",
+            color=INK_MUTED,
+        )
+        ax.grid(visible=False)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        fig.tight_layout()
+        return fig
 
     # The two curves converge at the top end, so nudge their end labels apart.
     label_offsets = {"naive": 9, "combined": -9}
@@ -418,9 +445,12 @@ def save_all(
         "top_school_scores": top_school_scores(combined),
         "top_school_funding": top_school_funding(combined),
         "strategy_comparison": strategy_comparison(comparison),
-        "budget_sweep": budget_sweep(sweep),
         "award_tiers": award_tiers(combined, config),
     }
+    # A run made without a sweep has nothing to chart here; omit it rather
+    # than writing an empty panel into the report.
+    if has_sweep_data(sweep):
+        figures["budget_sweep"] = budget_sweep(sweep)
 
     paths: dict[str, Path] = {}
     for slug, figure in figures.items():

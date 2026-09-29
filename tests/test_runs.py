@@ -137,3 +137,44 @@ def test_auto_label_describes_the_scenario(tmp_path, results):
     record = RunRegistry(tmp_path / "runs").save(results["half"])
     assert "$250M" in record.label
     assert "30%/70%" in record.label
+
+
+# --- replacing runs a caller owns -------------------------------------------
+
+
+def test_delete_by_label_removes_every_match(tmp_path, results):
+    registry = RunRegistry(tmp_path / "runs")
+    registry.save(results["control"], "Repeated")
+    registry.save(results["half"], "Repeated")
+    registry.save(results["financial"], "Kept")
+
+    removed = registry.delete_by_label("Repeated")
+    assert len(removed) == 2
+    assert [r.label for r in registry.list()] == ["Kept"]
+
+
+def test_delete_by_label_is_a_no_op_when_nothing_matches(tmp_path, results):
+    registry = RunRegistry(tmp_path / "runs")
+    registry.save(results["control"], "Only")
+    assert registry.delete_by_label("absent") == []
+    assert len(registry.list()) == 1
+
+
+def test_deleting_the_control_by_label_promotes_another_run(tmp_path, results):
+    registry = RunRegistry(tmp_path / "runs")
+    registry.save(results["control"], "Control", make_control=True)
+    registry.save(results["half"], "Other")
+
+    registry.delete_by_label("Control")
+    assert registry.control is not None
+    assert registry.control.label == "Other"
+
+
+def test_replacing_keeps_a_label_unambiguous(tmp_path, results):
+    """The failure this exists to prevent: lookup by name breaking on a repeat."""
+    registry = RunRegistry(tmp_path / "runs")
+    registry.save(results["control"], "Nightly")
+    registry.delete_by_label("Nightly")
+    registry.save(results["half"], "Nightly")
+
+    assert registry.resolve("Nightly").config.extra_budget == 250e6

@@ -1,14 +1,24 @@
-.PHONY: help install dev test lint fmt run report sweep dashboard clean
+.PHONY: help setup install dev verify demo test lint fmt run report sweep \
+        wizard runs compare scenarios dashboard clean
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-install:  ## install the package
+setup:  ## create .venv, install everything, and verify it works
+	./scripts/setup.sh
+
+install:  ## install the package into the active environment
 	pip install -e .
 
 dev:  ## install with dev and dashboard extras
 	pip install -e ".[dev,dashboard]"
+
+verify:  ## check this installation works and reproduces the published results
+	titlei verify
+
+demo:  ## guided end-to-end walkthrough
+	titlei demo
 
 test:  ## run the test suite
 	pytest
@@ -38,12 +48,13 @@ compare:  ## overlay and rank every saved run
 	titlei compare
 
 scenarios:  ## register a standard set of scenarios, then compare them
-	titlei run --label "Published 500M (control)" --control
-	titlei run --budget 250e6 --label "Half budget"
-	titlei run --budget 1e9   --label "Double budget"
-	titlei run --financial-weight 1.0 --label "Financial need only"
-	titlei run --low-need-cap 5000 --label "Equal caps"
-	titlei compare
+	titlei run --label "Published 500M (control)" --control --replace
+	titlei run --budget 250e6 --label "Half budget" --replace
+	titlei run --budget 1e9   --label "Double budget" --replace
+	titlei run --financial-weight 1.0 --label "Financial need only" --replace
+	titlei run --low-need-cap 5000 --label "Equal caps" --replace
+	titlei compare "Published 500M (control)" "Half budget" "Double budget" \
+		"Financial need only" "Equal caps"
 
 dashboard:  ## launch the interactive dashboard
 	streamlit run dashboard/app.py
