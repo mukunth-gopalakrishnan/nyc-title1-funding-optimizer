@@ -239,3 +239,31 @@ def test_every_subcommand_accepts_a_trailing_verbose(command):
         argv = [command, "some-ref", "-v"]
     args = parser.parse_args(argv)
     assert args.verbose is True
+
+
+# --- onboarding: verify and demo -------------------------------------------
+
+
+def test_verify_passes_on_a_healthy_install(tmp_path, capsys):
+    assert main(["verify", "--out", str(tmp_path)]) == 0
+    out = capsys.readouterr().out
+    assert "Reproduces published results" in out
+    assert "0 failed" in out
+    assert "titlei demo" in out
+
+
+def test_verify_exits_nonzero_and_advises_on_failure(tmp_path, capsys):
+    assert main(["verify", "--data", str(tmp_path / "gone.csv"), "--out", str(tmp_path)]) == 1
+    out = capsys.readouterr().out
+    assert "[FAIL]" in out
+    assert "What to do:" in out
+
+
+def test_demo_runs_with_no_arguments_beyond_paths(tmp_path, capsys):
+    assert main([
+        "demo", "--no-report",
+        "--out", str(tmp_path / "out"), "--runs-dir", str(tmp_path / "runs"),
+    ]) == 0
+    out = capsys.readouterr().out
+    assert "Step 1" in out and "Step 5" in out
+    assert "What to do next" in out

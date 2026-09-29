@@ -17,6 +17,7 @@ from titlei.data import load_schools
 from titlei.pipeline import run_pipeline
 from titlei.report import build_report
 from titlei.runs import DEFAULT_RUNS_DIR, AmbiguousRunReference, RunNotFound, RunRegistry
+from titlei.selfcheck import FAIL, run_checks, summarise
 from titlei.simulate import sweep_budgets
 from titlei.wizard import WizardAborted, run_wizard, save_config
 
@@ -137,6 +138,26 @@ def _build_parser() -> argparse.ArgumentParser:
         "--defaults",
         action="store_true",
         help="accept every default without prompting",
+    )
+
+    verify = sub.add_parser(
+        "verify",
+        parents=[verbosity],
+        help="check that this installation works, and reproduces the published results",
+    )
+    verify.add_argument("--data", type=Path, default=None)
+    verify.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
+    verify.add_argument("--out", type=Path, default=Path("outputs"))
+
+    demo = sub.add_parser(
+        "demo",
+        parents=[registry_args, verbosity],
+        help="guided end-to-end walkthrough; no arguments or prior knowledge needed",
+    )
+    demo.add_argument("--out", type=Path, default=Path("outputs/demo"))
+    demo.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
+    demo.add_argument(
+        "--no-report", action="store_true", help="skip building the HTML report"
     )
 
     runs = sub.add_parser(
@@ -403,8 +424,43 @@ def _cmd_compare(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_verify(args: argparse.Namespace) -> int:
+    print("Verifying the installation...\n")
+    results = run_checks(args.data, args.config, args.out)
+    for result in results:
+        print(result.line())
+
+    passed, failed, skipped = summarise(results)
+    print()
+    print(f"{passed} passed, {failed} failed, {skipped} skipped")
+
+    if failed:
+        print("\nWhat to do:")
+        for result in results:
+            if result.status == FAIL and result.remedy:
+                print(f"  - {result.name}: {result.remedy}")
+        return 1
+
+    print("\nThis installation works. Try:  titlei demo")
+    return 0
+
+
+def _cmd_demo(args: argparse.Namespace) -> int:
+    from titlei.demo import run_demo
+
+    run_demo(
+        out_dir=args.out,
+        runs_dir=args.runs_dir,
+        config_path=args.config,
+        build_html=not args.no_report,
+    )
+    return 0
+
+
 COMMANDS = {
     "run": _cmd_run,
+    "verify": _cmd_verify,
+    "demo": _cmd_demo,
     "report": _cmd_report,
     "sweep": _cmd_sweep,
     "describe": _cmd_describe,

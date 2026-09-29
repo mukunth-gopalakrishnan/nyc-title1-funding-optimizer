@@ -1,14 +1,24 @@
-.PHONY: help install dev test lint fmt run report sweep dashboard clean
+.PHONY: help setup install dev verify demo test lint fmt run report sweep \
+        wizard runs compare scenarios dashboard clean
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-install:  ## install the package
+setup:  ## create .venv, install everything, and verify it works
+	./scripts/setup.sh
+
+install:  ## install the package into the active environment
 	pip install -e .
 
 dev:  ## install with dev and dashboard extras
 	pip install -e ".[dev,dashboard]"
+
+verify:  ## check this installation works and reproduces the published results
+	titlei verify
+
+demo:  ## guided end-to-end walkthrough
+	titlei demo
 
 test:  ## run the test suite
 	pytest

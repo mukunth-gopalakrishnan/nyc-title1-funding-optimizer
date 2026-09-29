@@ -28,6 +28,9 @@ jobs:
       - name: Lint
         run: ruff check src tests dashboard
 
+      - name: Verify the installation
+        run: titlei verify
+
       - name: Test
         run: pytest --cov=titlei --cov-report=term-missing
 
@@ -44,6 +47,9 @@ jobs:
 
       - name: Install
         run: pip install -e .
+
+      - name: Run the guided demo
+        run: titlei demo --out outputs/demo
 
       - name: Run the model end to end
         run: titlei report --out outputs -v

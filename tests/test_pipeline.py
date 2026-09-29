@@ -46,3 +46,28 @@ def test_report_is_self_contained(result, tmp_path):
     assert "http://" not in document and "https://" not in document
     assert (tmp_path / "charts").is_dir()
     assert len(list((tmp_path / "charts").glob("*.png"))) == 8
+
+
+def test_report_builds_from_a_run_made_without_a_sweep(tmp_path):
+    """build_report used to raise KeyError on a sweep-less result."""
+    result = run_pipeline(with_sweep=False)
+    path = build_report(result, tmp_path)
+
+    assert path.exists()
+    charts = {p.stem for p in (tmp_path / "charts").glob("*.png")}
+    assert "budget_sweep" not in charts, "an empty sweep must not produce a chart"
+    assert len(charts) == 7
+
+
+def test_budget_sweep_chart_degrades_instead_of_raising():
+    import matplotlib.pyplot as plt
+    import pandas as pd
+
+    from titlei.viz import budget_sweep, has_sweep_data
+
+    empty = pd.DataFrame(columns=["Budget", "Strategy"])
+    assert not has_sweep_data(empty)
+
+    figure = budget_sweep(empty)
+    assert figure is not None
+    plt.close(figure)

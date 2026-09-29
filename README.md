@@ -28,7 +28,8 @@ It does that by making funding *less* equal on purpose.
 | `outputs/charts/`, `outputs/tables/` | The generated charts and result tables, tracked so they are browsable here |
 | `src/titlei/runs.py` | The run registry — every simulation stores the parameters that produced it |
 | `src/titlei/wizard.py` | The scenario questionnaire behind `titlei wizard` |
-| `tests/` | 132 tests, including a golden regression against the original analysis |
+| `tests/` | 158 tests, including a golden regression against the original analysis |
+| `docs/getting-started.md` | Ten minutes from clone to your own scenario |
 | `docs/overview.md` | What changed, what the program does, and what it is useful for |
 | `docs/methodology.md` | The model written out, and what it does *not* support |
 | `data/raw/` | 349 NYC Title I high schools with funding, staffing and Regents outcomes |
@@ -41,19 +42,38 @@ approximated.
 
 ## Quickstart
 
+Three commands from a fresh clone. Python 3.9+; nothing else — no database, no
+API keys, no network. The data is in the repository.
+
 ```bash
-pip install -e ".[dev,dashboard]"
+./scripts/setup.sh
 ```
 
+Creates `.venv`, installs everything, and verifies the result. Then:
+
 ```bash
-titlei report --out outputs
+source .venv/bin/activate && titlei demo
 ```
 
-That writes `outputs/report.html` — a standalone page with every chart inlined,
-no server needed — plus eight PNGs and seven CSVs. For the interactive version:
+A narrated two-second walkthrough: it runs the proposed model, runs the
+status-quo baseline against it, compares them, and writes a report — naming the
+equivalent command at each step.
 
 ```bash
-streamlit run dashboard/app.py
+titlei verify
+```
+
+Checks the install stage by stage. The check that matters is the last one: it
+re-runs the model and compares every school's allocation against the numbers
+published in the original capstone. Exits non-zero on failure, so it works in a
+script or a CI step.
+
+New here? [**docs/getting-started.md**](docs/getting-started.md) is a ten-minute
+tour. For the report and dashboard directly:
+
+```bash
+titlei report --out outputs          # standalone HTML, every chart inlined
+streamlit run dashboard/app.py       # interactive
 ```
 
 ### Set up a scenario by answering questions
@@ -230,6 +250,9 @@ chart, and the single-year snapshot — are in
 ## Development
 
 ```bash
+make setup      # create .venv, install, verify  (start here)
+make verify     # check the install reproduces the published results
+make demo       # guided walkthrough
 make test       # pytest
 make lint       # ruff
 make report     # rebuild outputs/
