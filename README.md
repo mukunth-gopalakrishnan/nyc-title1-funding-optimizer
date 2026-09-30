@@ -30,7 +30,7 @@ It does that by making funding *less* equal on purpose.
 | `src/titlei/wizard.py` | The scenario questionnaire behind `titlei wizard` |
 | `tests/` | 184 tests, including a golden regression against the original analysis |
 | `docs/getting-started.md` | Ten minutes from clone to your own scenario |
-| `docs/overview.md` | What changed, what the program does, and what it is useful for |
+| `docs/overview.md` | What changed, what it does, what it accomplishes, and what it is for |
 | `docs/methodology.md` | The model written out, and what it does *not* support |
 | `data/raw/` | 349 NYC Title I high schools with funding, staffing and Regents outcomes |
 
