@@ -28,8 +28,13 @@ verifies the result. Both are safe to re-run.
 ```bash
 python3 -m venv .venv                 # Windows: python -m venv .venv
 source .venv/bin/activate             # Windows: .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip   # needed: editable installs want pip >= 21.3
 pip install -e ".[dev,dashboard]"
 ```
+
+That pip upgrade is not optional on a stock macOS Python 3.9, which ships pip
+21.2 — without it the install fails with a misleading "setup.py not found".
+`scripts/setup.sh` and `scripts/setup.ps1` already do this for you.
 
 </details>
 

@@ -8,10 +8,15 @@ help:
 setup:  ## create .venv, install everything, and verify it works
 	./scripts/setup.sh
 
+# Editable installs of a pyproject-only project need pip >= 21.3; macOS ships
+# 3.9 with pip 21.2, where `pip install -e .` fails with a confusing message
+# about a missing setup.py.
 install:  ## install the package into the active environment
+	python -m pip install --upgrade pip
 	pip install -e .
 
 dev:  ## install with dev and dashboard extras
+	python -m pip install --upgrade pip
 	pip install -e ".[dev,dashboard]"
 
 verify:  ## check this installation works and reproduces the published results

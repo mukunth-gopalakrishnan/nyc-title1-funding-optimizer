@@ -82,3 +82,19 @@ def test_docs_cover_activation_on_both_platforms():
     assert "Activate.ps1" in guide
     assert "deactivate" in guide
     assert "-m titlei" in guide, "the no-activation fallback must be documented"
+
+
+def test_documented_manual_install_upgrades_pip_first():
+    """Editable installs need pip >= 21.3; macOS 3.9 ships 21.2.
+
+    Without the upgrade, `pip install -e .` fails with a misleading
+    "setup.py not found", which is a dead end for a newcomer.
+    """
+    guide = (ROOT / "docs" / "getting-started.md").read_text(encoding="utf-8")
+    manual = guide[guide.index("Prefer to do it by hand") :][:600]
+    assert "pip install --upgrade pip" in manual
+
+    makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
+    for target in ("install:", "dev:"):
+        body = makefile[makefile.index(target) :][:300]
+        assert "upgrade pip" in body, f"`make {target[:-1]}` must upgrade pip first"
