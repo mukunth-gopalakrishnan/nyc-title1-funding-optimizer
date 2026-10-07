@@ -20,7 +20,7 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
 from titlei.data import SCORE
-from titlei.needs import HIGH_NEED, NEED_GROUP
+from titlei.needs import HIGH_NEED, LOWER_NEED, NEED_GROUP
 from titlei.runs import RunRecord
 from titlei.simulate import CHANGE, PROJECTED
 from titlei.theme import (
@@ -378,7 +378,7 @@ def tier_gain_comparison(records: list[RunRecord]) -> Figure:
     _check_count(records)
     colors = _colors(records)
 
-    tiers = [HIGH_NEED, "Lower-Need Schools"]
+    tiers = [HIGH_NEED, LOWER_NEED]
     x = np.arange(len(tiers))
     width = min(0.8 / len(records), 0.34)
 

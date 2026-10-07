@@ -28,7 +28,7 @@ It does that by making funding *less* equal on purpose.
 | `outputs/charts/`, `outputs/tables/` | The generated charts and result tables, tracked so they are browsable here |
 | `src/titlei/runs.py` | The run registry — every simulation stores the parameters that produced it |
 | `src/titlei/wizard.py` | The scenario questionnaire behind `titlei wizard` |
-| `tests/` | 185 tests, including a golden regression against the original analysis |
+| `tests/` | 186 tests, including a golden regression against the original analysis |
 | `docs/getting-started.md` | Ten minutes from clone to your own scenario |
 | `docs/overview.md` | What changed, what it does, what it accomplishes, and what it is for |
 | `docs/methodology.md` | The model written out, and what it does *not* support |

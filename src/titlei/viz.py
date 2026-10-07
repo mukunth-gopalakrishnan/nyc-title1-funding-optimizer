@@ -22,7 +22,7 @@ from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter
 
 from titlei.data import ENROLLMENT, FUNDING_PER_PUPIL, SCHOOL, SCORE
-from titlei.needs import NEED_GROUP
+from titlei.needs import HIGH_NEED, NEED_GROUP
 from titlei.simulate import (
     CHANGE,
     EXTRA_PER_PUPIL,
@@ -376,7 +376,7 @@ def award_tiers(frame: pd.DataFrame, config=None) -> Figure:
 
     config = config or ModelConfig()
     caps = np.where(
-        frame[NEED_GROUP] == "High-Need Schools",
+        frame[NEED_GROUP] == HIGH_NEED,
         config.high_need_cap_per_pupil,
         config.low_need_cap_per_pupil,
     )

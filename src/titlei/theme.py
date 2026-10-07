@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import matplotlib as mpl
 
+from titlei.needs import HIGH_NEED, LOWER_NEED
+
 SURFACE = "#fcfcfb"
 INK = "#0b0b0b"
 INK_SECONDARY = "#52514e"
@@ -48,9 +50,11 @@ def series_color(index: int) -> str:
 BEFORE = SERIES_2
 AFTER = SERIES_1
 
+#: Keyed by the tier constants themselves, so renaming a tier cannot silently
+#: drop its colour.
 GROUP_COLORS = {
-    "High-Need Schools": SERIES_1,
-    "Lower-Need Schools": SERIES_2,
+    HIGH_NEED: SERIES_1,
+    LOWER_NEED: SERIES_2,
 }
 
 STRATEGY_COLORS = {

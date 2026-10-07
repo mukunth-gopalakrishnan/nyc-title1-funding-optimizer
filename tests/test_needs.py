@@ -69,3 +69,27 @@ def test_frpl_proportion_matches_counts(tiny_schools):
         scored[FRPL_PROPORTION],
         tiny_schools["K-12 FRPL Count"] / tiny_schools["K-12 Enrollment"],
     )
+
+
+def test_tier_labels_are_never_duplicated_as_literals():
+    """Renaming a tier must not silently break colours or cap selection.
+
+    `theme.GROUP_COLORS` and `viz.award_tiers` both key off the tier label.
+    When those were string literals, a rename would have left charts uncoloured
+    and every school on the low-need cap, with nothing failing.
+    """
+    import pathlib
+
+    from titlei.theme import GROUP_COLORS
+
+    assert set(GROUP_COLORS) == {HIGH_NEED, LOWER_NEED}
+
+    src = pathlib.Path(__file__).resolve().parents[1] / "src" / "titlei"
+    offenders = [
+        f"{path.name}:{n}"
+        for path in src.glob("*.py")
+        if path.name != "needs.py"
+        for n, line in enumerate(path.read_text().splitlines(), 1)
+        if f'"{HIGH_NEED}"' in line or f'"{LOWER_NEED}"' in line
+    ]
+    assert not offenders, f"use the HIGH_NEED/LOWER_NEED constants: {offenders}"
