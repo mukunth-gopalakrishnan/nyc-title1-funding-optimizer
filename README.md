@@ -1,5 +1,9 @@
 # NYC Title I Funding Optimizer
 
+[![CI](https://github.com/mukunth-gopalakrishnan/nyc-title1-funding-optimizer/actions/workflows/ci.yml/badge.svg)](https://github.com/mukunth-gopalakrishnan/nyc-title1-funding-optimizer/actions/workflows/ci.yml)
+[![Python 3.9–3.12](https://img.shields.io/badge/python-3.9%20%E2%80%93%203.12-blue)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 Where should New York City send $500M of discretionary school funding?
 
 The NYC Department of Education allocates discretionary Title I dollars on
