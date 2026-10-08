@@ -19,6 +19,7 @@ import hashlib
 import json
 import logging
 import re
+import shutil
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -326,8 +327,6 @@ class RunRegistry:
         runs. Otherwise re-running it makes that label ambiguous and every
         lookup by name fails.
         """
-        import shutil
-
         removed = []
         for record in self.list():
             if record.label == label and record.directory is not None:
@@ -344,8 +343,6 @@ class RunRegistry:
 
     def delete(self, reference: str) -> str:
         """Remove one run from the registry. Returns the deleted run id."""
-        import shutil
-
         record = self.resolve(reference)
         if record.directory is None:
             raise RunNotFound(f"run {record.run_id} has no directory to delete")

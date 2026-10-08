@@ -21,6 +21,7 @@ from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter
 
+from titlei.config import ModelConfig
 from titlei.data import ENROLLMENT, FUNDING_PER_PUPIL, SCHOOL, SCORE
 from titlei.needs import HIGH_NEED, NEED_GROUP
 from titlei.simulate import (
@@ -372,8 +373,6 @@ def award_tiers(frame: pd.DataFrame, config=None) -> Figure:
     the awards are effectively three discrete outcomes rather than a smooth
     distribution — counts read far better here than a histogram would.
     """
-    from titlei.config import ModelConfig
-
     config = config or ModelConfig()
     caps = np.where(
         frame[NEED_GROUP] == HIGH_NEED,

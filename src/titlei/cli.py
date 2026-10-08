@@ -14,12 +14,13 @@ from titlei import __version__
 from titlei import compare as compare_mod
 from titlei.config import DEFAULT_CONFIG_PATH, ModelConfig, load_config
 from titlei.data import load_schools
+from titlei.demo import run_demo
 from titlei.pipeline import run_pipeline
 from titlei.report import build_report
 from titlei.runs import DEFAULT_RUNS_DIR, AmbiguousRunReference, RunNotFound, RunRegistry
 from titlei.selfcheck import FAIL, run_checks, summarise
 from titlei.simulate import sweep_budgets
-from titlei.wizard import WizardAborted, run_wizard, save_config
+from titlei.wizard import QUESTIONS, WizardAborted, run_wizard, save_config
 
 logger = logging.getLogger("titlei")
 
@@ -322,8 +323,6 @@ def _cmd_wizard(args: argparse.Namespace) -> int:
         with args.answers.open(encoding="utf-8") as handle:
             answers = yaml.safe_load(handle) or {}
     if args.defaults:
-        from titlei.wizard import QUESTIONS
-
         answers = {q.key: answers.get(q.key, q.default) for q in QUESTIONS}
 
     try:
@@ -488,8 +487,6 @@ def _cmd_verify(args: argparse.Namespace) -> int:
 
 
 def _cmd_demo(args: argparse.Namespace) -> int:
-    from titlei.demo import run_demo
-
     run_demo(
         out_dir=args.out,
         runs_dir=args.runs_dir,

@@ -7,6 +7,12 @@ need to know what a fixture is to find out whether the thing runs.
 `titlei verify` walks the same path the model does, one stage at a time, and
 says which stage broke and what to do about it. Every check is independent, so
 a failure early on does not hide what is working later.
+
+The project imports in this module are deliberately deferred into the check
+functions rather than hoisted to the top. A missing dependency or a malformed
+config must be *reported* by the relevant check, not raised while this module
+is being imported — otherwise `titlei verify`, the command whose entire job is
+diagnosing a broken install, would itself fail to load.
 """
 
 from __future__ import annotations

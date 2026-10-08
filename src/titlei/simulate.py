@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from titlei.config import ModelConfig
-from titlei.data import ENROLLMENT, SCHOOL, SCORE
+from titlei.data import ENROLLMENT, FUNDING_PER_PUPIL, SCHOOL, SCORE
 from titlei.needs import (
     HIGH_NEED,
     NAIVE_WEIGHT,
@@ -51,8 +51,6 @@ def project_scores(
 
 def add_funding_deltas(frame: pd.DataFrame) -> pd.DataFrame:
     """Add the before/after per-pupil funding fields the dashboards chart."""
-    from titlei.data import FUNDING_PER_PUPIL
-
     frame = frame.copy()
     frame[FUNDING_AFTER] = frame[FUNDING_PER_PUPIL] + frame[EXTRA_PER_PUPIL]
     frame[PERCENT_INCREASE] = np.where(
