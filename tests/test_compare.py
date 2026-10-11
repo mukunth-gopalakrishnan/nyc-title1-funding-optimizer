@@ -81,13 +81,13 @@ def test_comparison_table_reports_deltas_against_the_control(records):
 
     control_row = table[table["is_control"]]
     assert len(control_row) == 1
-    assert control_row["Δ mean gain"].iloc[0] == pytest.approx(0.0)
-    assert control_row["Δ quartile gap closed"].iloc[0] == pytest.approx(0.0)
+    assert control_row["mean gain vs control"].iloc[0] == pytest.approx(0.0)
+    assert control_row["quartile gap closed vs control"].iloc[0] == pytest.approx(0.0)
 
 
 def test_comparison_table_works_without_a_control(records):
     table = compare.comparison_table(records[0], None)
-    assert "Δ mean gain" not in table.columns
+    assert "mean gain vs control" not in table.columns
     assert len(table) == 3
 
 

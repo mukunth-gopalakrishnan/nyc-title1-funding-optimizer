@@ -26,7 +26,7 @@ from titlei.simulate import CHANGE
 
 Emit = Callable[[str], None]
 
-RULE = "─" * 72
+RULE = "-" * 72
 
 PROPOSED_LABEL = "Demo: proposed (financial + academic)"
 BASELINE_LABEL = "Demo: baseline (financial need only)"

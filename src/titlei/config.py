@@ -12,7 +12,9 @@ from typing import Any
 
 import yaml
 
-DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "model.yaml"
+from titlei.resources import CONFIG_FILE
+
+DEFAULT_CONFIG_PATH = CONFIG_FILE
 
 
 @dataclass(frozen=True)

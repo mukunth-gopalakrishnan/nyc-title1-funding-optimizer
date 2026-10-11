@@ -29,10 +29,10 @@ test:  ## run the test suite
 	pytest
 
 lint:  ## check style
-	ruff check src tests dashboard
+	ruff check src tests dashboard packaging scripts
 
 fmt:  ## autofix style
-	ruff check --fix src tests dashboard
+	ruff check --fix src tests dashboard packaging scripts
 
 run:  ## run the model, write CSV outputs
 	titlei run --out outputs -v

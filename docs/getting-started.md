@@ -5,6 +5,17 @@ project, and none of Python packaging.
 
 ---
 
+## 0. Just want to try it?
+
+You don't need Python. Download the single-file program for your computer from
+the repository's **Releases** page, double-click it, and it runs the guided demo
+and opens the report. The README's *Download and run* section covers the
+one-time security prompt on first launch.
+
+Everything below is for working with the source.
+
+---
+
 ## 1. Set up (one command)
 
 **macOS / Linux**

@@ -131,9 +131,9 @@ def comparison_table(
     if control is not None:
         baseline = control.index_row()
         for column, delta_name in (
-            ("mean_score_change", "Δ mean gain"),
-            ("academic_gap_closed", "Δ quartile gap closed"),
-            ("high_need_share_of_budget", "Δ high-need budget share"),
+            ("mean_score_change", "mean gain vs control"),
+            ("academic_gap_closed", "quartile gap closed vs control"),
+            ("high_need_share_of_budget", "high-need share vs control"),
         ):
             frame[delta_name] = frame[column] - baseline[column]
         frame.insert(

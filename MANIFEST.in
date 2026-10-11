@@ -1,0 +1,2 @@
+# Source distributions must carry the bundled data too.
+recursive-include src/titlei/_data *.csv *.yaml

@@ -1,0 +1,40 @@
+# Parameters of the allocation model. Every value here is a policy choice, not
+# an estimated quantity — change them and re-run to explore a scenario.
+
+# --- eligibility -------------------------------------------------------------
+# Title I high schools: at least this share of K-12 enrollment on free or
+# reduced-price lunch.
+min_frpl_pct: 60.0
+
+# --- need index --------------------------------------------------------------
+# The combined need score is a weighted blend of two z-scores. Must sum to 1.
+financial_weight: 0.30   # FRPL proportion
+academic_weight: 0.70    # inverted Regents score
+
+# Need scores are clipped here. Schools left at the floor form the lower-need
+# tier and draw the smaller per-pupil cap.
+weight_floor: 0.10
+
+# --- budget and caps ---------------------------------------------------------
+extra_budget: 500000000
+high_need_cap_per_pupil: 5000
+low_need_cap_per_pupil: 1500
+
+# Schools averaging below `floor_score` are guaranteed `floor_award` dollars so
+# the optimizer cannot zero them out.
+floor_score: 60.0
+floor_award: 50000
+
+# --- outcome model -----------------------------------------------------------
+# Regents points gained per extra dollar of per-pupil funding. An assumption of
+# the study, not an estimate. See docs/methodology.md.
+impact_factor: 0.001
+max_score: 100.0
+
+# --- scenario sweep ----------------------------------------------------------
+sweep_budgets:
+  - 100000000
+  - 250000000
+  - 500000000
+  - 750000000
+  - 1000000000

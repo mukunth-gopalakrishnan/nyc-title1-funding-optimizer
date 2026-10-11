@@ -32,7 +32,7 @@ It does that by making funding *less* equal on purpose.
 | `outputs/charts/`, `outputs/tables/` | The generated charts and result tables, tracked so they are browsable here |
 | `src/titlei/runs.py` | The run registry — every simulation stores the parameters that produced it |
 | `src/titlei/wizard.py` | The scenario questionnaire behind `titlei wizard` |
-| `tests/` | 186 tests, including a golden regression against the original analysis |
+| `tests/` | 201 tests, including a golden regression against the original analysis |
 | `docs/getting-started.md` | Ten minutes from clone to your own scenario |
 | `docs/overview.md` | What changed, what it does, what it accomplishes, and what it is for |
 | `docs/methodology.md` | The model written out, and what it does *not* support |
@@ -44,9 +44,57 @@ capstone). It is now a package with a CLI, a config file, tests, and CI. The
 original per-school outputs to the last decimal — the analysis is preserved, not
 approximated.
 
-## Quickstart
+## Download and run — no Python needed
 
-Three commands from a fresh clone. Python 3.9+; nothing else — no database, no
+Grab the file for your computer from the
+[**Releases**](https://github.com/mukunth-gopalakrishnan/nyc-title1-funding-optimizer/releases)
+page. It is a single self-contained program: no Python, no installs, no setup.
+
+| Your computer | Download |
+|---|---|
+| Mac (Apple silicon, M1 or later) | `titlei-macos-arm64` |
+| Windows | `titlei-windows-x86_64.exe` |
+| Linux | `titlei-linux-x86_64` |
+
+**Double-click it.** It runs the guided demo, writes a report to a
+`titlei-output` folder in your home directory, and opens the report in your
+browser.
+
+**Or use it from a terminal** — it is the full `titlei` command line:
+
+```bash
+./titlei-macos-arm64 verify      # prove it reproduces the published results
+./titlei-macos-arm64 wizard      # build your own scenario, guided
+./titlei-macos-arm64 --help
+```
+
+**The first launch is blocked once, by design.** The binaries are not signed
+with a paid Apple or Microsoft developer certificate, so the operating system
+asks you to confirm:
+
+- **Mac:** right-click the file → **Open** → **Open**. Or in a terminal:
+  `xattr -d com.apple.quarantine titlei-macos-arm64 && chmod +x titlei-macos-arm64`
+- **Windows:** on the blue SmartScreen dialog, **More info** → **Run anyway**.
+
+After that it opens normally. Intel Macs aren't covered by the download — use
+the Python route below.
+
+### With Python, in one line
+
+```bash
+pip install git+https://github.com/mukunth-gopalakrishnan/nyc-title1-funding-optimizer
+```
+
+```bash
+titlei demo
+```
+
+The school data, default config and the published results are bundled inside
+the package, so this works from any directory — no clone needed.
+
+## Quickstart (from source)
+
+For changing the code. Three commands from a fresh clone. Python 3.9+; nothing else — no database, no
 API keys, no network. The data is in the repository.
 
 ```bash

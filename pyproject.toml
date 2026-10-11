@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nyc-title1-funding-optimizer"
-version = "1.2.0"
+version = "1.3.0"
 description = "Need-weighted optimization of discretionary funding across NYC Title I high schools"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -25,6 +25,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dashboard = ["streamlit>=1.28"]
+video = ["imageio-ffmpeg>=0.4"]
 dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
@@ -38,9 +39,15 @@ titlei = "titlei.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# Ship the school data, default config and published results inside the
+# package, so an ordinary install works with no repository around it.
+[tool.setuptools.package-data]
+titlei = ["_data/*.csv", "_data/*.yaml"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = ["slow: builds a fresh environment; run with -m slow"]
 filterwarnings = ["error::FutureWarning"]
 
 [tool.ruff]
@@ -53,3 +60,5 @@ ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/titlei/viz.py" = ["E402"]
+# matplotlib's backend must be chosen before pyplot is imported
+"scripts/make_simulation_video.py" = ["E402"]

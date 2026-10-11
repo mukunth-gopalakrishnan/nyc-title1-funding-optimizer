@@ -1,0 +1,86 @@
+name: Release binaries
+
+# Builds a single-file `titlei` executable for Linux, Windows and macOS, proves
+# each one reproduces the published results, and attaches them to a GitHub
+# Release. Anyone can then download one file and run it -- no Python needed.
+#
+#   Tag a release:     git tag v1.3.0 && git push origin v1.3.0
+#   Or build on demand: Actions tab -> "Release binaries" -> Run workflow
+#                       (binaries appear as downloadable artifacts on the run)
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build (${{ matrix.asset }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            binary: titlei
+            asset: titlei-linux-x86_64
+          - os: windows-latest
+            binary: titlei.exe
+            asset: titlei-windows-x86_64.exe
+          - os: macos-latest
+            binary: titlei
+            asset: titlei-macos-arm64
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install the package and PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install . pyinstaller
+
+      - name: Build the binary
+        run: python packaging/build_binary.py
+
+      # Run the frozen binary from outside the checkout, so it can only succeed
+      # on the data bundled inside it.
+      - name: Smoke-test the binary
+        shell: bash
+        run: |
+          BIN="$GITHUB_WORKSPACE/dist/${{ matrix.binary }}"
+          cd "$RUNNER_TEMP"
+          "$BIN" --version
+          "$BIN" verify --out "$RUNNER_TEMP/verify"
+          "$BIN" demo --no-report --out "$RUNNER_TEMP/demo" --runs-dir "$RUNNER_TEMP/runs"
+
+      - name: Name the asset for its platform
+        shell: bash
+        run: mv "dist/${{ matrix.binary }}" "dist/${{ matrix.asset }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: assets/*
+          generate_release_notes: true

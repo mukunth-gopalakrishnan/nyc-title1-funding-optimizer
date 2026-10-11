@@ -26,7 +26,7 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Lint
-        run: ruff check src tests dashboard
+        run: ruff check src tests dashboard packaging scripts
 
       - name: Verify the installation
         run: titlei verify

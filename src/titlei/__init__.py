@@ -9,7 +9,7 @@ from titlei.config import ModelConfig, load_config
 from titlei.pipeline import PipelineResult, run_pipeline
 from titlei.runs import RunRecord, RunRegistry
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 __all__ = [
     "ModelConfig",

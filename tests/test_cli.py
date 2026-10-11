@@ -377,3 +377,37 @@ def test_module_entry_point_runs_the_cli(tmp_path):
     )
     assert result.returncode == 0, result.stderr
     assert "Reproduces published results" in result.stdout
+
+
+# --- Windows codepages -------------------------------------------------------
+
+
+@pytest.mark.parametrize("command", ["demo", "compare", "verify"])
+def test_output_survives_a_windows_codepage(command, tmp_path):
+    """Piped output on Windows falls back to cp1252.
+
+    `demo` and `compare` used to crash with UnicodeEncodeError there -- on a
+    box-drawing rule and a Greek delta -- which would have failed the Windows
+    release build and any user who redirected output to a file.
+    """
+    import os
+    import subprocess
+    import sys
+
+    runs = tmp_path / "runs"
+    env = {**os.environ, "PYTHONIOENCODING": "cp1252"}
+    base = [sys.executable, "-m", "titlei"]
+
+    subprocess.run(
+        base + ["run", "--no-sweep", "--label", "seed",
+                "--out", str(tmp_path / "o"), "--runs-dir", str(runs)],
+        env=env, check=True, capture_output=True,
+    )
+    args = {
+        "demo": ["demo", "--no-report", "--out", str(tmp_path / "d"), "--runs-dir", str(runs)],
+        "compare": ["compare", "--no-charts", "--runs-dir", str(runs)],
+        "verify": ["verify", "--out", str(tmp_path / "v")],
+    }[command]
+    result = subprocess.run(base + args, env=env, capture_output=True)
+    assert result.returncode == 0, result.stderr.decode("utf-8", "replace")
+    assert b"UnicodeEncodeError" not in result.stderr

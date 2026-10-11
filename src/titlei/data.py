@@ -9,12 +9,11 @@ from pathlib import Path
 import pandas as pd
 
 from titlei.config import ModelConfig
+from titlei.resources import DATA_FILE
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DATA_PATH = (
-    Path(__file__).resolve().parents[2] / "data" / "raw" / "nyc_title1_schools.csv"
-)
+DEFAULT_DATA_PATH = DATA_FILE
 
 SCHOOL = "School Name"
 SCORE = "Avg Regents Score"

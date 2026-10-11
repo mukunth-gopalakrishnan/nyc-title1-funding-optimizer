@@ -23,6 +23,8 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
+from titlei.resources import GOLDEN_FILE as _GOLDEN
+
 PASS = "pass"
 FAIL = "fail"
 SKIP = "skip"
@@ -30,9 +32,9 @@ SKIP = "skip"
 MIN_PYTHON = (3, 9)
 REQUIRED_PACKAGES = ("pandas", "numpy", "scipy", "matplotlib", "yaml")
 
-#: Where the golden fixtures live when the repository is checked out. They are
-#: absent from a plain wheel install, in which case that check is skipped.
-FIXTURES = Path(__file__).resolve().parents[2] / "tests" / "fixtures"
+#: The published per-school results. Bundled inside the package, so even a
+#: downloaded binary can prove it reproduces the original analysis.
+GOLDEN_FILE = _GOLDEN
 
 
 @dataclass
@@ -221,12 +223,12 @@ def _check_model(schools, config) -> Iterator[CheckResult]:
 
 def _check_golden(schools, config) -> CheckResult:
     """The strongest check: does this install reproduce the published numbers?"""
-    fixture = FIXTURES / "golden_combined_500M.csv"
+    fixture = GOLDEN_FILE
     if not fixture.exists():
         return CheckResult(
             "Reproduces published results",
             SKIP,
-            "golden fixtures not installed (expected outside a git checkout)",
+            "published results file is missing from this installation",
         )
 
     import numpy as np

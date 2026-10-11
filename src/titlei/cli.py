@@ -444,7 +444,7 @@ def _cmd_compare(args: argparse.Namespace) -> int:
         "high_need_cap", "low_need_cap", "mean_score_change",
         "academic_gap_closed", "academic_gap_closed_per_100m",
         "high_need_share_of_budget",
-        "Δ mean gain", "Δ quartile gap closed", "Δ high-need budget share",
+        "mean gain vs control", "quartile gap closed vs control", "high-need share vs control",
     ] if c in table.columns]
     _print_frame(table[columns])
     print(f"\nnote: {compare_mod.INVARIANCE_NOTE}")
@@ -510,7 +510,23 @@ COMMANDS = {
 }
 
 
+def _make_output_robust() -> None:
+    """Never let the console's codepage crash a command.
+
+    On Windows, redirected or piped output falls back to the ANSI codepage
+    (cp1252), which cannot encode every character a scenario label or school
+    name might contain. Substituting an unencodable character is better than a
+    UnicodeEncodeError halfway through a run. UTF-8 terminals are unaffected.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")
+        except (AttributeError, ValueError):  # not a TextIOWrapper, or detached
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _make_output_robust()
     args = _build_parser().parse_args(argv)
     logging.basicConfig(
         level=logging.INFO if args.verbose else logging.WARNING,
