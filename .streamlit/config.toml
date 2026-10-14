@@ -1,0 +1,6 @@
+# Used when Streamlit is started from this folder (`streamlit run dashboard/app.py`).
+# `titlei dashboard` passes the same settings itself, so it works from anywhere.
+
+[browser]
+# Do not send Streamlit's anonymous usage statistics.
+gatherUsageStats = false

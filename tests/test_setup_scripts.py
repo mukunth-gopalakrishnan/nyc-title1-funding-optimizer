@@ -98,3 +98,51 @@ def test_documented_manual_install_upgrades_pip_first():
     for target in ("install:", "dev:"):
         body = makefile[makefile.index(target) :][:300]
         assert "upgrade pip" in body, f"`make {target[:-1]}` must upgrade pip first"
+
+
+# --- the double-click launchers ----------------------------------------------
+
+MAC_LAUNCHER = ROOT / "Run Simulation.command"
+WIN_LAUNCHER = ROOT / "Run Simulation.bat"
+
+
+def test_both_launchers_exist_at_the_top_of_the_project():
+    """They are what a downloader sees first, so they live in the root."""
+    assert MAC_LAUNCHER.exists() and WIN_LAUNCHER.exists()
+
+
+def test_the_mac_launcher_is_executable_and_recorded_so_in_git():
+    """Finder will only run a double-clicked .command file with +x."""
+    assert os.access(MAC_LAUNCHER, os.X_OK)
+    out = subprocess.run(
+        ["git", "ls-files", "-s", MAC_LAUNCHER.name],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    if out.returncode != 0 or not out.stdout:
+        pytest.skip("not a git checkout, or not yet committed")
+    assert out.stdout.startswith("100755"), f"mode is not executable: {out.stdout}"
+
+
+def test_the_mac_launcher_is_valid_bash():
+    result = subprocess.run(
+        ["bash", "-n", str(MAC_LAUNCHER)], capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def test_the_windows_launcher_has_crlf_line_endings():
+    """cmd.exe can mis-find `goto` labels in a batch file with bare LF endings."""
+    data = WIN_LAUNCHER.read_bytes()
+    assert b"\r\n" in data
+    assert data.count(b"\n") == data.count(b"\r\n")
+    attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
+    assert "*.bat text eol=crlf" in attributes
+
+
+@pytest.mark.parametrize("launcher", [MAC_LAUNCHER, WIN_LAUNCHER])
+def test_both_launchers_install_and_start_the_same_thing(launcher):
+    text = launcher.read_text(encoding="utf-8")
+    assert '-e ".[dashboard]"' in text
+    assert re.search(r"-m titlei dashboard", text)
+    assert ".venv" in text, "launchers and setup scripts must share one environment"
+    assert "(3, 9)" in text, "launchers must enforce the same minimum Python"

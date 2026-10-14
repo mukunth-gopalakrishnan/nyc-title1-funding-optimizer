@@ -7,10 +7,15 @@ project, and none of Python packaging.
 
 ## 0. Just want to try it?
 
-You don't need Python. Download the single-file program for your computer from
+To see the interactive simulation, open the project folder and double-click
+**`Run Simulation.command`** (Mac) or **`Run Simulation.bat`** (Windows). The
+first launch sets itself up, which takes a couple of minutes, then the
+simulation opens in your browser.
+
+Without Python at all: download the single-file program for your computer from
 the repository's **Releases** page, double-click it, and it runs the guided demo
-and opens the report. The README's *Download and run* section covers the
-one-time security prompt on first launch.
+and opens the report. The README covers the one-time security prompt on first
+launch.
 
 Everything below is for working with the source.
 
@@ -203,11 +208,11 @@ The default ranking metric avoids both traps. See
 ## 6. The interactive dashboard
 
 ```bash
-streamlit run dashboard/app.py
+titlei dashboard
 ```
 
-Move the budget and the need weights with sliders and watch the allocation
-change. The **Saved runs** tab saves the current scenario and compares it
+It opens in your browser. Move the budget and the need weights with sliders and
+watch the allocation change; press Ctrl+C in the terminal to stop it. The **Saved runs** tab saves the current scenario and compares it
 against the others.
 
 ---

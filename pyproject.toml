@@ -24,7 +24,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dashboard = ["streamlit>=1.28"]
+dashboard = ["streamlit>=1.50"]
 video = ["imageio-ffmpeg>=0.4"]
 dev = [
     "pytest>=7.4",
@@ -39,10 +39,10 @@ titlei = "titlei.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
-# Ship the school data, default config and published results inside the
-# package, so an ordinary install works with no repository around it.
+# Ship the school data, default config, published results and the dashboard
+# inside the package, so an ordinary install works with no repository around it.
 [tool.setuptools.package-data]
-titlei = ["_data/*.csv", "_data/*.yaml"]
+titlei = ["_data/*.csv", "_data/*.yaml", "_dashboard/*.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -11,6 +11,7 @@ narration names each one, so the demo doubles as a tour of the CLI.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Callable
 
@@ -149,7 +150,8 @@ def run_demo(
     emit("  titlei runs                  # the two runs you just made")
     emit(f"  titlei show '{PROPOSED_LABEL}'")
     emit("  titlei wizard                # build your own scenario, guided")
-    emit("  streamlit run dashboard/app.py")
+    if not getattr(sys, "frozen", False):  # the no-Python download has no dashboard
+        emit("  titlei dashboard             # the interactive simulation, in your browser")
     emit("")
 
     return {

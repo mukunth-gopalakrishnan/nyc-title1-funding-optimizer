@@ -23,16 +23,48 @@ It does that by making funding *less* equal on purpose.
 
 ---
 
+## See the simulation
+
+The simulation runs in your browser. Move the budget slider and watch every
+school's allocation and projected score change; the other controls set how need
+is scored and how much any one school can receive.
+
+1. Get the project: on GitHub, **Code → Download ZIP** and unzip it (or clone it).
+2. Open the folder and double-click:
+
+| Your computer | Double-click |
+|---|---|
+| Mac | **`Run Simulation.command`** |
+| Windows | **`Run Simulation.bat`** |
+
+The first launch sets everything up in a private environment inside the folder.
+That takes a couple of minutes and needs Python 3.9 or newer
+([python.org](https://www.python.org/downloads/)) and an internet connection,
+once. After that it opens in a few seconds. Leave the window it opens running
+while you use the simulation; close it to stop.
+
+**If your computer blocks it the first time** — the files are not signed with a
+paid Apple or Microsoft developer certificate, so the operating system asks you
+to confirm once:
+
+- **Mac:** System Settings → Privacy & Security → **Open Anyway** (macOS 15 and
+  later), or right-click the file → **Open** (macOS 14 and earlier).
+- **Windows:** if a warning appears, choose **More info** → **Run anyway**.
+
+From a terminal it is `./"Run Simulation.command"` (macOS, Linux), or
+`titlei dashboard` once the package is installed.
+
 ## What's here
 
 | | |
 |---|---|
 | `src/titlei/` | The model: data prep, need scoring, the LP, outcome projection, metrics, charts |
-| `dashboard/app.py` | Interactive Streamlit dashboard — move the budget and weights, watch the allocation change |
+| `Run Simulation.command`, `.bat` | Double-click to open the interactive simulation; sets itself up on first run |
+| `src/titlei/_dashboard/app.py` | The Streamlit dashboard behind it (`titlei dashboard`) |
 | `outputs/charts/`, `outputs/tables/` | The generated charts and result tables, tracked so they are browsable here |
 | `src/titlei/runs.py` | The run registry — every simulation stores the parameters that produced it |
 | `src/titlei/wizard.py` | The scenario questionnaire behind `titlei wizard` |
-| `tests/` | 201 tests, including a golden regression against the original analysis |
+| `tests/` | 225 tests, including a golden regression against the original analysis |
 | `docs/getting-started.md` | Ten minutes from clone to your own scenario |
 | `docs/overview.md` | What changed, what it does, what it accomplishes, and what it is for |
 | `docs/methodology.md` | The model written out, and what it does *not* support |
@@ -58,7 +90,8 @@ page. It is a single self-contained program: no Python, no installs, no setup.
 
 **Double-click it.** It runs the guided demo, writes a report to a
 `titlei-output` folder in your home directory, and opens the report in your
-browser.
+browser. The live, slider-driven simulation needs Python; for that, see
+[See the simulation](#see-the-simulation).
 
 **Or use it from a terminal** — it is the full `titlei` command line:
 
@@ -68,11 +101,12 @@ browser.
 ./titlei-macos-arm64 --help
 ```
 
-**The first launch is blocked once, by design.** The binaries are not signed
-with a paid Apple or Microsoft developer certificate, so the operating system
-asks you to confirm:
+**If your computer blocks it the first time** — the files are not signed with a
+paid Apple or Microsoft developer certificate, so the operating system asks you
+to confirm once:
 
-- **Mac:** right-click the file → **Open** → **Open**. Or in a terminal:
+- **Mac:** System Settings → Privacy & Security → **Open Anyway** (macOS 15 and
+  later), or right-click the file → **Open** (macOS 14 and earlier). Or in a terminal:
   `xattr -d com.apple.quarantine titlei-macos-arm64 && chmod +x titlei-macos-arm64`
 - **Windows:** on the blue SmartScreen dialog, **More info** → **Run anyway**.
 
@@ -87,6 +121,16 @@ pip install git+https://github.com/mukunth-gopalakrishnan/nyc-title1-funding-opt
 
 ```bash
 titlei demo
+```
+
+With the interactive simulation as well:
+
+```bash
+pip install "nyc-title1-funding-optimizer[dashboard] @ git+https://github.com/mukunth-gopalakrishnan/nyc-title1-funding-optimizer"
+```
+
+```bash
+titlei dashboard
 ```
 
 The school data, default config and the published results are bundled inside
@@ -135,7 +179,7 @@ tour. For the report and dashboard directly:
 
 ```bash
 titlei report --out outputs          # standalone HTML, every chart inlined
-streamlit run dashboard/app.py       # interactive
+titlei dashboard                     # interactive, opens in your browser
 ```
 
 ### Set up a scenario by answering questions
@@ -315,6 +359,7 @@ chart, and the single-year snapshot — are in
 make setup      # create .venv, install, verify  (start here)
 make verify     # check the install reproduces the published results
 make demo       # guided walkthrough
+make dashboard  # the interactive simulation
 make test       # pytest
 make lint       # ruff
 make report     # rebuild outputs/

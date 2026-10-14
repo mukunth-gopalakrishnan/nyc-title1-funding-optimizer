@@ -48,3 +48,7 @@ CONFIG_FILE = locate("config/model.yaml", "model.yaml")
 GOLDEN_FILE = locate(
     "tests/fixtures/golden_combined_500M.csv", "golden_combined_500M.csv"
 )
+
+#: The Streamlit app behind `titlei dashboard`. It ships inside the package
+#: (there is no repository copy), so it exists in every kind of install.
+DASHBOARD_APP = PACKAGE_DIR / "_dashboard" / "app.py"

@@ -40,7 +40,7 @@ described it. None of the five analysis files could be re-run.
 | `ORIE4820_Capstone.xlsx` | Results frozen in cells; formulas not inspectable | `data/raw/nyc_title1_schools.csv` + code that regenerates every number |
 | `naive_optimization.py` | Only the *baseline* model; the proposed optimiser was never in the submission | `needs.py` + `optimizer.py` implement both, reconstructed from the workbook |
 | `comparison.py` | One chart, hardcoded paths, constants inline | `viz.py` — eight charts on a shared theme, driven by config |
-| Two `.pbix` files | Power BI Desktop is Windows-only; binary, so not diffable and not runnable in CI | `dashboard/app.py` (Streamlit) + a standalone HTML report |
+| Two `.pbix` files | Power BI Desktop is Windows-only; binary, so not diffable and not runnable in CI A Streamlit dashboard (`titlei dashboard`) + a standalone HTML report |
 
 Cross-cutting, the constants were scattered across the scripts, so changing a
 budget meant editing code in several places. They now live in one file,
@@ -135,6 +135,46 @@ The last three are worth noting as a pattern: each was found not by reading the
 code but by *running the documented commands verbatim* — including running them
 a second and third time, which is what exposed the label collisions.
 
+**v1.3.0 — runs anywhere, and the simulation is one double-click away**
+
+The project ran on its author's machine and nowhere else, and the interactive
+simulation was hard to find and hard to start. This release fixes both.
+
+- **Data ships inside the package.** The code used to find its data by walking
+  up from its own source file to the repository, so only an editable install
+  inside the clone worked. The school data, default config and published
+  results are now bundled (`src/titlei/_data`), located by `titlei.resources`,
+  and a test proves an ordinary install passes `titlei verify` from an
+  unrelated directory.
+- **A single-file program that needs no Python**, built by
+  `packaging/build_binary.py` and, on a version tag, by the release workflow
+  for Linux, Windows and macOS. Double-clicked, it runs the guided demo and
+  opens the report.
+- **`Run Simulation.command` / `Run Simulation.bat`.** Double-click to open the
+  interactive simulation; the first run builds `.venv` and installs what it
+  needs, later runs start in seconds, and an environment whose Python has since
+  disappeared is rebuilt rather than failing.
+- **`titlei dashboard`** starts the dashboard and opens it in the browser. It
+  runs Streamlit headless, because Streamlit's first ordinary run stops to ask
+  for an email address in the terminal, which from a double-clicked window just
+  looks as if nothing happened. It listens on 127.0.0.1 only and turns off
+  Streamlit's usage statistics. The dashboard moved into the package so every
+  install has it; `streamlit run dashboard/app.py` still works.
+
+Bugs found and fixed along the way:
+
+| Bug | Consequence |
+|---|---|
+| Data located relative to the source tree | Any install other than an editable one inside the clone failed with "school data not found" |
+| Non-ASCII output on Windows | `titlei demo` and `titlei compare` crashed with `UnicodeEncodeError` when piped, which would have failed the Windows release build |
+| Dashboard results cached on the budget alone | Moving the need-weight slider or the cap inputs silently changed nothing |
+| High-need cap set below the lower-need cap | The dashboard crashed with a raw traceback instead of explaining the conflict |
+| Plain `streamlit run` on a fresh machine | Waited at an email prompt before serving anything |
+
+The dashboard is now tested by driving it headlessly — including the two
+dashboard bugs above — and by starting a real server, checking it answers,
+and stopping it with Ctrl+C.
+
 ---
 
 ## 3. What the program can do
@@ -190,17 +230,19 @@ score, the impact factor, the score ceiling, and the sweep range.
 
 ### Outputs and interfaces
 
-- **CLI** — ten commands: `run`, `report`, `sweep`, `describe`, `wizard`,
-  `verify`, `demo`, `runs`, `show`, `compare`
+- **CLI** — eleven commands: `run`, `report`, `sweep`, `describe`, `wizard`,
+  `verify`, `demo`, `dashboard`, `runs`, `show`, `compare`
 - **Static HTML report** — every chart inlined, no server, no network
 - **Streamlit dashboard** — move the budget and weights and watch the
-  allocation change; save scenarios and compare them in-app
+  allocation change; save scenarios and compare them in-app. Opened by
+  `titlei dashboard`, or by double-clicking `Run Simulation.command` /
+  `Run Simulation.bat`, which set themselves up on first run
 - **CSV tables** for every result, so nothing is locked inside a chart
 - Eight single-run charts and five comparison charts, all on one theme
 
 ### Engineering
 
-184 tests at 97% coverage, ruff-clean, CI on Python 3.9–3.12. CI runs the
+225 tests at 96% coverage, ruff-clean, CI on Python 3.9–3.12. CI runs the
 suite, the self-check, the guided demo and the full pipeline end to end, then
 uploads the report as an artifact — so the onboarding path is covered by the
 same gate as the model.
@@ -358,6 +400,7 @@ be explicit about their limits.
 |---|---|
 | `titlei verify` | Check this install works and reproduces the published results |
 | `titlei demo` | Guided end-to-end walkthrough; no arguments needed |
+| `titlei dashboard` | Open the interactive simulation in your browser |
 | `titlei describe` | Summarise the input data and what the eligibility filter drops |
 | `titlei run` | Run both strategies, write CSVs, register the run |
 | `titlei report` | Run and build the standalone HTML report |

@@ -23,7 +23,7 @@ jobs:
           cache: pip
 
       - name: Install
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,dashboard]"
 
       - name: Lint
         run: ruff check src tests dashboard packaging scripts

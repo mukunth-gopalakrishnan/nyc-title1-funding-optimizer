@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 from titlei.demo import run_demo
@@ -101,3 +103,19 @@ def test_demo_is_idempotent(tmp_path):
     # Neither of these may raise AmbiguousRunReference.
     assert registry.resolve(PROPOSED_LABEL).config.financial_weight == 0.3
     assert registry.resolve(BASELINE_LABEL).config.financial_weight == 1.0
+
+
+def test_demo_points_to_the_dashboard_only_where_it_can_run(tmp_path, monkeypatch):
+    """The no-Python download has no dashboard, so it must not suggest one."""
+    def tips(frozen):
+        if frozen:
+            monkeypatch.setattr(sys, "frozen", True, raising=False)
+        else:
+            monkeypatch.delattr(sys, "frozen", raising=False)
+        lines = []
+        run_demo(out_dir=tmp_path / str(frozen), runs_dir=tmp_path / f"runs{frozen}",
+                 build_html=False, emit=lines.append)
+        return "\n".join(lines)
+
+    assert "titlei dashboard" in tips(frozen=False)
+    assert "titlei dashboard" not in tips(frozen=True)

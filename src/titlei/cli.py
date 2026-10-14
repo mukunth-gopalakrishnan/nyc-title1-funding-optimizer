@@ -13,6 +13,8 @@ import yaml
 from titlei import __version__
 from titlei import compare as compare_mod
 from titlei.config import DEFAULT_CONFIG_PATH, ModelConfig, load_config
+from titlei.dashboard import DEFAULT_PORT, DashboardUnavailable
+from titlei.dashboard import launch as launch_dashboard
 from titlei.data import load_schools
 from titlei.demo import run_demo
 from titlei.pipeline import run_pipeline
@@ -164,6 +166,20 @@ def _build_parser() -> argparse.ArgumentParser:
     demo.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
     demo.add_argument(
         "--no-report", action="store_true", help="skip building the HTML report"
+    )
+
+    dashboard = sub.add_parser(
+        "dashboard",
+        parents=[registry_args, verbosity],
+        help="open the interactive simulation in your browser",
+    )
+    dashboard.add_argument(
+        "--port", type=int, default=None,
+        help=f"port to serve on (default: the first free one from {DEFAULT_PORT})",
+    )
+    dashboard.add_argument(
+        "--no-browser", action="store_true",
+        help="start the dashboard without opening a browser",
     )
 
     runs = sub.add_parser(
@@ -496,10 +512,21 @@ def _cmd_demo(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_dashboard(args: argparse.Namespace) -> int:
+    try:
+        return launch_dashboard(
+            args.runs_dir, port=args.port, open_browser=not args.no_browser
+        )
+    except DashboardUnavailable as exc:
+        print(f"error: {exc}")
+        return 1
+
+
 COMMANDS = {
     "run": _cmd_run,
     "verify": _cmd_verify,
     "demo": _cmd_demo,
+    "dashboard": _cmd_dashboard,
     "report": _cmd_report,
     "sweep": _cmd_sweep,
     "describe": _cmd_describe,

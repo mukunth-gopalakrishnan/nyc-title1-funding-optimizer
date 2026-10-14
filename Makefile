@@ -61,8 +61,8 @@ scenarios:  ## register a standard set of scenarios, then compare them
 	titlei compare "Published 500M (control)" "Half budget" "Double budget" \
 		"Financial need only" "Equal caps"
 
-dashboard:  ## launch the interactive dashboard
-	streamlit run dashboard/app.py
+dashboard:  ## open the interactive simulation in your browser
+	titlei dashboard
 
 clean:
 	rm -rf outputs/charts outputs/tables outputs/comparison outputs/report.html \
