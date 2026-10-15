@@ -16,6 +16,9 @@ lifts the average high-need school by **+5.0 Regents points** instead of
 **+3.8**, and narrows the gap between need tiers from **9.5 points to 5.9**.
 It does that by making funding *less* equal on purpose.
 
+**See it first:** a [narrated walkthrough of the simulation](docs/media/nyc-title1-simulation-narrated.mp4?raw=true)
+(MP4, under three minutes) and the [project slides](docs/media/NYC-Title1-Funding-Optimizer.pdf) (PDF).
+
 <p align="center">
   <img src="outputs/charts/strategy_comparison.png" width="720"
        alt="Projected Regents gain by allocation strategy">
@@ -68,6 +71,7 @@ From a terminal it is `./"Run Simulation.command"` (macOS, Linux), or
 | `docs/getting-started.md` | Ten minutes from clone to your own scenario |
 | `docs/overview.md` | What changed, what it does, what it accomplishes, and what it is for |
 | `docs/methodology.md` | The model written out, and what it does *not* support |
+| `docs/media/` | The narrated walkthrough video and the slides (PDF) |
 | `data/raw/` | 349 NYC Title I high schools with funding, staffing and Regents outcomes |
 
 This started as a spreadsheet, two scripts, and two Power BI files (an ORIE 4820
