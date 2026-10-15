@@ -16,6 +16,7 @@ from pathlib import Path
 from titlei import __version__
 from titlei.cli import _make_output_robust
 from titlei.cli import main as cli_main
+from titlei.invocation import command
 
 OUTPUT_DIR = Path.home() / "titlei-output"
 
@@ -39,10 +40,17 @@ def _guided() -> int:
         except Exception:  # a headless machine has no browser; the path is printed
             pass
 
+    # Spelled out with this file's own path: the download is not named
+    # `titlei`, and it is not on PATH, so a bare `titlei --help` would fail.
+    tips = [
+        (command("--help"), ""),
+        (command("verify"), "prove it reproduces the published results"),
+        (command("wizard"), "build your own scenario, guided"),
+    ]
+    width = max(len(line) for line, _ in tips)
     print("\nThis program is also a full command line. From a terminal, try:")
-    print("    titlei --help")
-    print("    titlei verify      # prove it reproduces the published results")
-    print("    titlei wizard      # build your own scenario, guided")
+    for line, note in tips:
+        print(f"    {line:<{width}}  # {note}" if note else f"    {line}")
 
     if sys.stdin is not None and sys.stdin.isatty():
         try:

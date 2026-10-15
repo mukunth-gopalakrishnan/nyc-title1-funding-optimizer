@@ -213,7 +213,12 @@ def ask(
     prompt = f"{question.prompt}{suffix} ({_format_default(question)}): "
 
     while True:
-        raw = input_fn(prompt).strip()
+        try:
+            raw = input_fn(prompt).strip()
+        except (EOFError, KeyboardInterrupt):
+            # Ctrl+D, Ctrl+C, or piped input that ran out: stop cleanly, not
+            # with a traceback.
+            raise WizardAborted("questionnaire aborted") from None
         if raw.lower() in {"q", "quit", "abort"}:
             raise WizardAborted("questionnaire aborted")
         if not raw:

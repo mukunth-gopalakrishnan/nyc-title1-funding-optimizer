@@ -170,6 +170,9 @@ Bugs found and fixed along the way:
 | Dashboard results cached on the budget alone | Moving the need-weight slider or the cap inputs silently changed nothing |
 | High-need cap set below the lower-need cap | The dashboard crashed with a raw traceback instead of explaining the conflict |
 | Plain `streamlit run` on a fresh machine | Waited at an email prompt before serving anything |
+| Suggested commands assumed an activated environment | After `./.venv/bin/titlei demo`, the tips said `titlei runs`, which fails there with "command not found"; they now say `./.venv/bin/titlei runs`, and plain `titlei` only where that works |
+| `verify` suggested a bare `pip install` | Outside the environment, `pip` can belong to another Python and install in the wrong place; it now names this Python's own pip |
+| Ctrl+D or Ctrl+C at a wizard question | Ended in a traceback instead of "aborted; nothing was run" |
 
 The dashboard is now tested by driving it headlessly — including the two
 dashboard bugs above — and by starting a real server, checking it answers,
@@ -242,7 +245,7 @@ score, the impact factor, the score ceiling, and the sweep range.
 
 ### Engineering
 
-225 tests at 96% coverage, ruff-clean, CI on Python 3.9–3.12. CI runs the
+239 tests at 96% coverage, ruff-clean, CI on Python 3.9–3.12. CI runs the
 suite, the self-check, the guided demo and the full pipeline end to end, then
 uploads the report as an artifact — so the onboarding path is covered by the
 same gate as the model.

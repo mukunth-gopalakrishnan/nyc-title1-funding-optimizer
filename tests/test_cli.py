@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import io
+
 import pytest
 
 from titlei.cli import _build_parser, main
@@ -411,3 +413,10 @@ def test_output_survives_a_windows_codepage(command, tmp_path):
     result = subprocess.run(base + args, env=env, capture_output=True)
     assert result.returncode == 0, result.stderr.decode("utf-8", "replace")
     assert b"UnicodeEncodeError" not in result.stderr
+
+
+def test_wizard_with_no_input_left_says_aborted(monkeypatch, capsys):
+    """`titlei wizard < /dev/null`, or Ctrl+D at a question: no traceback."""
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    assert main(["wizard"]) == 1
+    assert "aborted; nothing was run" in capsys.readouterr().out

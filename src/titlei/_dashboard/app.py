@@ -22,6 +22,7 @@ from titlei import metrics, viz
 from titlei.config import load_config
 from titlei.dashboard import RUNS_DIR_ENV
 from titlei.data import FUNDING_PER_PUPIL, SCHOOL, SCORE, load_schools
+from titlei.invocation import command
 from titlei.needs import NEED_GROUP
 from titlei.pipeline import run_pipeline
 from titlei.runs import DEFAULT_RUNS_DIR, RunRegistry
@@ -277,7 +278,7 @@ with runs_tab:
 
     records = registry.list()
     if not records:
-        st.info("No runs saved yet. Save one above, or use `titlei run` on the CLI.")
+        st.info(f"No runs saved yet. Save one above, or use `{command('run')}` on the CLI.")
     else:
         by_label = {f"{r.label}  ·  {r.run_id}": r for r in records}
         chosen = st.multiselect(

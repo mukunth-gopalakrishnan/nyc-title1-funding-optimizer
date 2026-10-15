@@ -111,6 +111,17 @@ def test_quitting_aborts():
         run_wizard(input_fn=_scripted(["q"]), output_fn=lambda _: None)
 
 
+@pytest.mark.parametrize("interruption", [EOFError, KeyboardInterrupt],
+                         ids=["ctrl-d or input ran out", "ctrl-c"])
+def test_interrupting_a_question_aborts_cleanly(interruption):
+    """Regression: these escaped as a traceback instead of the abort message."""
+    def interrupted(_prompt):
+        raise interruption
+
+    with pytest.raises(WizardAborted):
+        run_wizard(input_fn=interrupted, output_fn=lambda _: None)
+
+
 def test_every_question_explains_itself():
     for question in QUESTIONS:
         if question.key == "label":

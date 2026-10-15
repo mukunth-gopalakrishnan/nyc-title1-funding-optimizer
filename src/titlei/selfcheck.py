@@ -23,6 +23,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
+from titlei.invocation import python as _python
 from titlei.resources import GOLDEN_FILE as _GOLDEN
 
 PASS = "pass"
@@ -31,6 +32,9 @@ SKIP = "skip"
 
 MIN_PYTHON = (3, 9)
 REQUIRED_PACKAGES = ("pandas", "numpy", "scipy", "matplotlib", "yaml")
+
+#: Import names whose pip package is named differently.
+PIP_NAMES = {"yaml": "PyYAML"}
 
 #: The published per-school results. Bundled inside the package, so even a
 #: downloaded binary can prove it reproduces the original analysis.
@@ -95,7 +99,10 @@ def _check_packages() -> CheckResult:
         "Dependencies",
         FAIL,
         f"missing: {', '.join(missing)}",
-        'Run: pip install -e ".[dev,dashboard]"',
+        # This interpreter's own pip: a bare `pip` outside the activated
+        # environment can belong to another Python and install in the wrong place.
+        f"Run: {_python()} -m pip install "
+        + " ".join(PIP_NAMES.get(name, name) for name in missing),
     )
 
 

@@ -19,6 +19,7 @@ from titlei import compare as compare_mod
 from titlei import metrics
 from titlei.config import ModelConfig, load_config
 from titlei.data import load_schools
+from titlei.invocation import command
 from titlei.needs import NEED_GROUP
 from titlei.pipeline import run_pipeline
 from titlei.report import build_report
@@ -63,7 +64,7 @@ def run_demo(
     emit("Nothing here is simulated output; every number is computed as you watch.")
 
     # --- 1. the data -----------------------------------------------------
-    _step(emit, 1, "Load the schools", "titlei describe")
+    _step(emit, 1, "Load the schools", command("describe"))
     schools, load_report = load_schools(None, config)
     emit(f"  {load_report.summary()}")
     emit(
@@ -73,7 +74,7 @@ def run_demo(
     )
 
     # --- 2. the proposed model -------------------------------------------
-    _step(emit, 2, "Run the proposed model", "titlei run --label 'Demo: proposed'")
+    _step(emit, 2, "Run the proposed model", command("run --label 'Demo: proposed'"))
     proposed = run_pipeline(None, config, with_sweep=True)
     summary = proposed.group_summary
     emit(
@@ -93,7 +94,7 @@ def run_demo(
     # --- 3. the status quo ------------------------------------------------
     _step(
         emit, 3, "Run the status-quo baseline",
-        "titlei run --financial-weight 1.0 --label 'Demo: baseline'",
+        command("run --financial-weight 1.0 --label 'Demo: baseline'"),
     )
     baseline_config = config.replace(financial_weight=1.0, academic_weight=0.0)
     baseline = run_pipeline(None, baseline_config, with_sweep=False)
@@ -105,7 +106,7 @@ def run_demo(
     )
 
     # --- 4. compare -------------------------------------------------------
-    _step(emit, 4, "Compare them", "titlei compare")
+    _step(emit, 4, "Compare them", command("compare"))
     records = [proposed_run, baseline_run]
     emit("  Ranked by how much of the top-vs-bottom-quartile gap each closes")
     emit("  per $100M. Those quartiles come from baseline scores, so neither")
@@ -130,7 +131,7 @@ def run_demo(
     emit("  whatever the allocation. Only targeting differs. (docs/methodology.md 4a)")
 
     # --- 5. artefacts -----------------------------------------------------
-    _step(emit, 5, "Write the outputs", "titlei report")
+    _step(emit, 5, "Write the outputs", command("report"))
     tables = proposed.write_tables(out_dir / "tables")
     charts = compare_mod.save_comparison(records, out_dir / "comparison", proposed_run)
     report_path = build_report(proposed, out_dir) if build_html else None
@@ -147,11 +148,18 @@ def run_demo(
     emit(RULE)
     if report_path:
         emit(f"  open {report_path}")
-    emit("  titlei runs                  # the two runs you just made")
-    emit(f"  titlei show '{PROPOSED_LABEL}'")
-    emit("  titlei wizard                # build your own scenario, guided")
+    # Spelled the way that works from here: plain `titlei` only when it is on
+    # PATH (an activated environment), else e.g. `./.venv/bin/titlei`.
+    tips = [
+        (command("runs"), "the two runs you just made"),
+        (command(f"show '{PROPOSED_LABEL}'"), ""),
+        (command("wizard"), "build your own scenario, guided"),
+    ]
     if not getattr(sys, "frozen", False):  # the no-Python download has no dashboard
-        emit("  titlei dashboard             # the interactive simulation, in your browser")
+        tips.append((command("dashboard"), "the interactive simulation, in your browser"))
+    width = max(len(line) for line, note in tips if note)
+    for line, note in tips:
+        emit(f"  {line:<{width}}  # {note}" if note else f"  {line}")
     emit("")
 
     return {

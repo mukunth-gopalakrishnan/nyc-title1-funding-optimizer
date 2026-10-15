@@ -28,6 +28,7 @@ from typing import Any
 import pandas as pd
 
 from titlei.config import ModelConfig
+from titlei.invocation import command
 from titlei.pipeline import PipelineResult
 
 logger = logging.getLogger(__name__)
@@ -270,7 +271,7 @@ class RunRegistry:
         """Find a run by id, id prefix, config hash, or exact label."""
         records = self.list()
         if not records:
-            raise RunNotFound("the registry is empty; run `titlei run` first")
+            raise RunNotFound(f"the registry is empty; run `{command('run')}` first")
 
         for match in (
             [r for r in records if r.run_id == reference],

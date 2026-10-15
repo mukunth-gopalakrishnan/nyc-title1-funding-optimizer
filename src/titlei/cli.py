@@ -17,6 +17,7 @@ from titlei.dashboard import DEFAULT_PORT, DashboardUnavailable
 from titlei.dashboard import launch as launch_dashboard
 from titlei.data import load_schools
 from titlei.demo import run_demo
+from titlei.invocation import command
 from titlei.pipeline import run_pipeline
 from titlei.report import build_report
 from titlei.runs import DEFAULT_RUNS_DIR, AmbiguousRunReference, RunNotFound, RunRegistry
@@ -365,7 +366,7 @@ def _cmd_wizard(args: argparse.Namespace) -> int:
     print(f"  targeting  {record.roi['high_need_share_of_budget']:.1%} of budget "
           f"to high-need, quartile gap closed "
           f"{record.roi['academic_gap_closed']:.2f} pts")
-    print("\ncompare it against the control with:  titlei compare")
+    print(f"\ncompare it against the control with:  {command('compare')}")
     return 0
 
 
@@ -382,7 +383,7 @@ def _cmd_runs(args: argparse.Namespace) -> int:
 
     table = registry.table()
     if table.empty:
-        print("no runs registered yet — try `titlei run` or `titlei wizard`")
+        print(f"no runs registered yet — try `{command('run')}` or `{command('wizard')}`")
         return 0
 
     view = table[[
@@ -428,7 +429,7 @@ def _cmd_compare(args: argparse.Namespace) -> int:
         registry.resolve_all(args.refs) if args.refs else registry.list()
     )
     if not records:
-        print("no runs registered yet — try `titlei run` or `titlei wizard`")
+        print(f"no runs registered yet — try `{command('run')}` or `{command('wizard')}`")
         return 1
 
     control = (
@@ -498,7 +499,7 @@ def _cmd_verify(args: argparse.Namespace) -> int:
                 print(f"  - {result.name}: {result.remedy}")
         return 1
 
-    print("\nThis installation works. Try:  titlei demo")
+    print(f"\nThis installation works. Try:  {command('demo')}")
     return 0
 
 
